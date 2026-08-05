@@ -9,6 +9,34 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedAvatarEmoji = '🍎';
   let graphManager = null;
 
+  function renderTaskChecklistHtml(text) {
+    if (!text || !text.trim()) return '<div class="empty-guide">Belum ada catatan.</div>';
+    
+    const lines = text.split('\n').filter(l => l.trim().length > 0);
+    return `
+      <ul class="task-list">
+        ${lines.map(line => {
+          let badgeClass = 'priority-normal';
+          if (line.includes('🔥') || line.includes('[Tinggi]')) badgeClass = 'priority-high';
+          else if (line.includes('⚡') || line.includes('[Sedang]')) badgeClass = 'priority-medium';
+          else if (line.includes('✅')) badgeClass = 'task-do';
+          else if (line.includes('❌')) badgeClass = 'task-dont';
+
+          return `
+            <li class="task-item ${badgeClass}">
+              <span class="task-bullet"></span>
+              <span class="task-text">${escapeHtml(line)}</span>
+            </li>
+          `;
+        }).join('')}
+      </ul>
+    `;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
   function renderLayout() {
     const stats = StorageManager.getCapacityStats();
     
@@ -21,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         <div class="capacity-gauge">
           ${Object.entries(stats).map(([key, s]) => `
-            <div class="gauge-item" title="${s.name} (Rekomendasi Idealis: ${s.recMax})">
+            <div class="gauge-item" title="${s.name} (Rekomendasi Kapasitas: ${s.recMax})">
               <span class="dot" style="background: ${s.color}; color: ${s.color}"></span>
               <span class="label">${s.name.split(' ')[0]}: ${s.count} <small style="opacity:0.7">(Rec: ${s.recMax})</small></span>
             </div>
@@ -54,18 +82,18 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <div class="guide-section">
-              <h3>💡 Cara Bersikap Baik</h3>
-              <p id="drawerHowToTreat" class="guide-box"></p>
+              <h3>🎯 Prioritas & Cara Bersikap</h3>
+              <div id="drawerHowToTreat" class="guide-box"></div>
             </div>
 
             <div class="guide-section">
-              <h3>⚠️ Do & Don'ts</h3>
-              <p id="drawerDoAndDonts" class="guide-box"></p>
+              <h3>⚡ Checklist Do & Don'ts</h3>
+              <div id="drawerDoAndDonts" class="guide-box"></div>
             </div>
 
             <div class="guide-section">
-              <h3>📝 Catatan Tambahan</h3>
-              <p id="drawerNotes" class="guide-box"></p>
+              <h3>📝 Catatan & Detail</h3>
+              <div id="drawerNotes" class="guide-box"></div>
             </div>
 
             <div class="drawer-actions">
@@ -81,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="modal-content">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <h2 id="modalTitle" style="margin:0;">Tambah Kontak Baru</h2>
-            <button type="button" id="loadTemplateBtn" class="btn btn-secondary" style="font-size:0.78rem; padding:4px 10px;">✨ Isi Template Rekomendasi</button>
+            <button type="button" id="loadTemplateBtn" class="btn btn-secondary" style="font-size:0.78rem; padding:4px 10px;">✨ Isi Template Prioritas</button>
           </div>
           
           <form id="contactForm">
@@ -103,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <input type="text" id="formName" required placeholder="Contoh: Sarah">
             </div>
             <div class="form-group">
-              <label>Kategori Affinity (Tier & Rekomendasi Kapasitas)</label>
+              <label>Kategori Affinity (Tier & Rekomendasi)</label>
               <select id="formTier">
                 ${Object.entries(TIER_CONFIG).map(([k, v]) => `
                   <option value="${k}">${v.name} (${v.description})</option>
@@ -119,16 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
               <input type="text" id="formIg" placeholder="username">
             </div>
             <div class="form-group">
-              <label>Cara Bersikap Baik (How to Treat)</label>
-              <textarea id="formHowToTreat" rows="2" placeholder="Saran bersikap baik..."></textarea>
+              <label>Prioritas & Cara Bersikap (Gunakan baris baru untuk tiap poin)</label>
+              <textarea id="formHowToTreat" rows="3" placeholder="🔥 [Tinggi] Tanyakan kabar harian...&#10;⚡ [Sedang] Apresiasi usaha..."></textarea>
             </div>
             <div class="form-group">
-              <label>Do & Don'ts (Batas Pribadi)</label>
-              <textarea id="formDoAndDonts" rows="2" placeholder="Hal yang boleh & tidak boleh..."></textarea>
+              <label>Checklist Do & Don'ts (Gunakan baris baru)</label>
+              <textarea id="formDoAndDonts" rows="3" placeholder="✅ DO: Kirim ucapan selamat pagi...&#10;❌ DONT: Membahas masalah berat saat lelah..."></textarea>
             </div>
             <div class="form-group">
-              <label>Catatan Tambahan</label>
-              <textarea id="formNotes" rows="2" placeholder="Catatan kepribadian, kesukaan..."></textarea>
+              <label>Catatan & Detail Tambahan</label>
+              <textarea id="formNotes" rows="3" placeholder="📌 Suka es krim matcha...&#10;📌 Tanggal Ultah..."></textarea>
             </div>
             <div class="modal-actions">
               <button type="button" id="cancelModalBtn" class="btn btn-secondary">Batal</button>
@@ -178,9 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
       igBtn.style.display = 'none';
     }
 
-    document.getElementById('drawerHowToTreat').textContent = contact.attitudeGuide?.howToTreat || 'Belum ada catatan.';
-    document.getElementById('drawerDoAndDonts').textContent = contact.attitudeGuide?.doAndDonts || 'Belum ada catatan.';
-    document.getElementById('drawerNotes').textContent = contact.attitudeGuide?.notes || 'Belum ada catatan.';
+    document.getElementById('drawerHowToTreat').innerHTML = renderTaskChecklistHtml(contact.attitudeGuide?.howToTreat);
+    document.getElementById('drawerDoAndDonts').innerHTML = renderTaskChecklistHtml(contact.attitudeGuide?.doAndDonts);
+    document.getElementById('drawerNotes').innerHTML = renderTaskChecklistHtml(contact.attitudeGuide?.notes);
   }
 
   function applyTierTemplate(tierKey) {
@@ -211,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.getElementById('formTier').onchange = (e) => {
-      // Auto-fill template if fields are empty
       const currentHowTo = document.getElementById('formHowToTreat').value;
       if (!currentHowTo.trim()) {
         applyTierTemplate(e.target.value);
@@ -309,11 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('contactForm').reset();
       document.getElementById('formId').value = '';
       selectedAvatarEmoji = '🍎';
-      // Pre-fill initial tier template
       applyTierTemplate('lovers');
     }
 
-    // Highlight active avatar option
     const avatarGrid = document.getElementById('avatarGrid');
     if (avatarGrid) {
       avatarGrid.querySelectorAll('.avatar-opt').forEach(b => {

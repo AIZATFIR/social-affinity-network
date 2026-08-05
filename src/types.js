@@ -6,9 +6,16 @@ export const TIER_CONFIG = {
     icon: '❤️',
     description: 'Rekomendasi: 1 Orang (Intimate Bond)',
     template: {
-      howToTreat: 'Selalu prioritaskan komunikasi jernih, ingat hari penting, & apresiasi usaha kecil.',
-      doAndDonts: 'DO: Ucapan selamat pagi & tanya kabar. DONT: Bahas topik sensitif saat lagi capek.',
-      notes: 'Suka kejutan kecil, es krim matcha, & perhatian konsisten.'
+      howToTreat: `🔥 [Tinggi] Tanyakan kabar harian & dengarkan tanpa menyela
+⚡ [Sedang] Apresiasi usaha kecil & berikan dukungan emosional
+💡 [Opsional] Agendakan quality time tiap akhir pekan`,
+      doAndDonts: `✅ DO: Kirim ucapan semangat pagi & perhatian kecil
+✅ DO: Jaga komunikasi terbuka saat ada masalah
+❌ DONT: Membahas masalah berat saat pasangan sedang lelah
+❌ DONT: Mengabaikan pesan tanpa kabar lebih dari 6 jam`,
+      notes: `📌 Suka es krim matcha & hero Angela
+📌 Hari Ulang Tahun: 14 Februari
+📌 Love Language: Quality Time & Words of Affirmation`
     }
   },
   close_friends: {
@@ -18,9 +25,16 @@ export const TIER_CONFIG = {
     icon: '🛡️',
     description: 'Rekomendasi: 5 Orang (Deep Trust Circle)',
     template: {
-      howToTreat: 'Saling dukung saat masa sulit, tempat berbagi cerita rahasia & diskusi jernih.',
-      doAndDonts: 'DO: Siap bantu saat butuh saran. DONT: Bocorkan rahasia atau menghakimi.',
-      notes: 'Teman curhat utama & kawan mabar setia.'
+      howToTreat: `🔥 [Tinggi] Saling dukung saat masa sulit & bersikap jujur
+⚡ [Sedang] Luangkan waktu nongkrong / mabar berkala
+💡 [Opsional] Saling bantu dalam project pribadi`,
+      doAndDonts: `✅ DO: Siap bantu saat sahabat butuh saran jernih
+✅ DO: Jaga rahasia & privasi bersama
+❌ DONT: Membicarakan keburukan di belakang
+❌ DONT: Datang hanya saat butuh sesuatu`,
+      notes: `📌 Teman seperjuangan rank Mythic MLBB
+📌 Favorit tempat nongkrong: Co-working Space / Cafe
+📌 Suka diskusi topik teknologi & investasi`
     }
   },
   family: {
@@ -30,9 +44,16 @@ export const TIER_CONFIG = {
     icon: '🏠',
     description: 'Rekomendasi: 10 Orang (Kinship Circle)',
     template: {
-      howToTreat: 'Jaga ikatan emosional, komunikasi berkala, dan tunjukkan rasa hormat.',
-      doAndDonts: 'DO: Tanya kesehatan & momen penting. DONT: Bicara dengan nada tinggi.',
-      notes: 'Keluarga dekat & sanak saudara utama.'
+      howToTreat: `🔥 [Tinggi] Komunikasi berkala & tunjukkan rasa hormat
+⚡ [Sedang] Bantu kebutuhan urusan rumah tangga
+💡 [Opsional] Rencanakan kumpul keluarga di hari raya`,
+      doAndDonts: `✅ DO: Tanya kesehatan & kabar secara rutin
+✅ DO: Bantu anggota keluarga yang sedang kesulitan
+❌ DONT: Bicara dengan nada tinggi atau membentak
+❌ DONT: Menghilang tanpa kabar dalam waktu lama`,
+      notes: `📌 Hari Ulang Tahun: 10 Agustus
+📌 Makanan favorit: Masakan rumah & es buah
+📌 Catatan: Senang diberi kabar harian singkat`
     }
   },
   friends: {
@@ -42,9 +63,15 @@ export const TIER_CONFIG = {
     icon: '👥',
     description: 'Rekomendasi: 30 Orang (Social Circle)',
     template: {
-      howToTreat: 'Nongkrong & kerja sama santai, saling menghargai batas waktu pribadi.',
-      doAndDonts: 'DO: Saling sapa & mabar santai. DONT: Memaksa hadir jika sedang sibuk.',
-      notes: 'Teman komunitas, hobi, atau organisasi.'
+      howToTreat: `🔥 [Tinggi] Menjaga sopan santun & ramah saat bertemu
+⚡ [Sedang] Ikut serta dalam kegiatan kelompok / komunitas
+💡 [Opsional] Saling berbagi info bermanfaat`,
+      doAndDonts: `✅ DO: Bersikap ramah & bersosialisasi santai
+✅ DO: Menghargai waktu & batas pribadi
+❌ DONT: Memaksa hadir jika sedang ada kesibukan
+❌ DONT: Membuat lelucon yang menyinggung`,
+      notes: `📌 Kenal dari komunitas gaming / kampus
+📌 Hobi: Futsal & Fotografi`
     }
   },
   acquaintances: {
@@ -54,9 +81,15 @@ export const TIER_CONFIG = {
     icon: '👤',
     description: 'Rekomendasi: 100 Orang (Outer Network)',
     template: {
-      howToTreat: 'Menjaga sopan santun profesional & menyapa saat bertemu.',
-      doAndDonts: 'DO: Jaga etika & salam hangat. DONT: Terlalu mencampuri urusan pribadi.',
-      notes: 'Kolega kerja, rekan seminar, atau kenalan baru.'
+      howToTreat: `🔥 [Tinggi] Menjaga etika profesional & saling sapa
+⚡ [Sedang] Simpan kontak & dukung postingan profesional
+💡 [Opsional] Bertukar kartu nama / akun LinkedIn`,
+      doAndDonts: `✅ DO: Respon sopan saat dihubungi
+✅ DO: Senyum & sapa jika berpapasan
+❌ DONT: Terlalu mencampuri urusan pribadi
+❌ DONT: Meminta bantuan besar tanpa hubungan jelas`,
+      notes: `📌 Pertemuan awal: Seminar Tech / Event Networking
+📌 Bidang kerja: Digital Marketing`
     }
   }
 };
@@ -96,9 +129,16 @@ export const INITIAL_CONTACTS = [
     whatsappNumber: '628123456789',
     instagramHandle: 'sarah_mlbb',
     attitudeGuide: {
-      howToTreat: 'Ingat hari penting, apresiasi usaha kecil, dengarkan tanpa menghakimi.',
-      doAndDonts: 'DO: Kasih ucapan selamat pagi. DONT: Bahas mabar pas dia lagi capek.',
-      notes: 'Suka es krim matcha & hero Angela.'
+      howToTreat: `🔥 [Tinggi] Tanyakan kabar harian & dengarkan tanpa menyela
+⚡ [Sedang] Apresiasi usaha kecil & berikan dukungan emosional
+💡 [Opsional] Agendakan quality time tiap akhir pekan`,
+      doAndDonts: `✅ DO: Kirim ucapan semangat pagi & perhatian kecil
+✅ DO: Jaga komunikasi terbuka saat ada masalah
+❌ DONT: Membahas masalah berat saat pasangan sedang lelah
+❌ DONT: Mengabaikan pesan tanpa kabar lebih dari 6 jam`,
+      notes: `📌 Suka es krim matcha & hero Angela
+📌 Hari Ulang Tahun: 14 Februari
+📌 Love Language: Quality Time & Words of Affirmation`
     },
     createdAt: new Date().toISOString()
   },
@@ -110,9 +150,16 @@ export const INITIAL_CONTACTS = [
     whatsappNumber: '628987654321',
     instagramHandle: 'budi_gaming',
     attitudeGuide: {
-      howToTreat: 'Selalu terbuka, saling bantu saat butuh saran jernih.',
-      doAndDonts: 'Jujur dan to the point.',
-      notes: 'Teman seperjuangan rank Mythic.'
+      howToTreat: `🔥 [Tinggi] Saling dukung saat masa sulit & bersikap jujur
+⚡ [Sedang] Luangkan waktu nongkrong / mabar berkala
+💡 [Opsional] Saling bantu dalam project pribadi`,
+      doAndDonts: `✅ DO: Siap bantu saat sahabat butuh saran jernih
+✅ DO: Jaga rahasia & privasi bersama
+❌ DONT: Membicarakan keburukan di belakang
+❌ DONT: Datang hanya saat butuh sesuatu`,
+      notes: `📌 Teman seperjuangan rank Mythic MLBB
+📌 Favorit tempat nongkrong: Co-working Space / Cafe
+📌 Suka diskusi topik teknologi & investasi`
     },
     createdAt: new Date().toISOString()
   },
@@ -124,37 +171,16 @@ export const INITIAL_CONTACTS = [
     whatsappNumber: '628111222333',
     instagramHandle: '',
     attitudeGuide: {
-      howToTreat: 'Kabar rutin tiap sore, selalu bersikap santun.',
-      doAndDonts: 'DO: Tanya kabar kesehatan. DONT: Bicara dengan nada tinggi.',
-      notes: 'Suka masakan rumah & tanaman hias.'
-    },
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '4',
-    name: 'Pak Boss (Kantor)',
-    avatar: '💼',
-    tier: 'acquaintances',
-    whatsappNumber: '628199988877',
-    instagramHandle: '',
-    attitudeGuide: {
-      howToTreat: 'Respon cepat di jam kerja, berikan update progress tepat waktu.',
-      doAndDonts: 'DO: Laporan terstruktur. DONT: Melewatkan deadline.',
-      notes: 'Manajer Divisi Tech.'
-    },
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '5',
-    name: 'Coach Alex (Gym)',
-    avatar: '⚽',
-    tier: 'friends',
-    whatsappNumber: '628777666555',
-    instagramHandle: 'alex_fitness',
-    attitudeGuide: {
-      howToTreat: 'Disiplin latihan, apresiasi saran workout.',
-      doAndDonts: 'DO: Datang tepat waktu. DONT: Skip jadwal tanpa kabar.',
-      notes: 'Personal Trainer Gym.'
+      howToTreat: `🔥 [Tinggi] Komunikasi berkala & tunjukkan rasa hormat
+⚡ [Sedang] Bantu kebutuhan urusan rumah tangga
+💡 [Opsional] Rencanakan kumpul keluarga di hari raya`,
+      doAndDonts: `✅ DO: Tanya kesehatan & kabar secara rutin
+✅ DO: Bantu anggota keluarga yang sedang kesulitan
+❌ DONT: Bicara dengan nada tinggi atau membentak
+❌ DONT: Menghilang tanpa kabar dalam waktu lama`,
+      notes: `📌 Hari Ulang Tahun: 10 Agustus
+📌 Makanan favorit: Masakan rumah & es buah
+📌 Catatan: Senang diberi kabar harian singkat`
     },
     createdAt: new Date().toISOString()
   }
