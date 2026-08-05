@@ -6,6 +6,14 @@ function getEmojiSvgDataUrl(emoji) {
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 
+const TIER_RADII = {
+  lovers: 130,
+  close_friends: 240,
+  family: 350,
+  friends: 470,
+  acquaintances: 600
+};
+
 export function createGraphManager(containerEl, onSelectNode) {
   let cy = null;
 
@@ -19,31 +27,60 @@ export function createGraphManager(containerEl, onSelectNode) {
           avatar: '👑',
           bgImage: getEmojiSvgDataUrl('👑'),
           isMe: true
-        }
+        },
+        position: { x: 0, y: 0 }
       }
     ];
 
-    contacts.forEach(c => {
-      const tierColor = TIER_CONFIG[c.tier]?.color || '#ffffff';
-      const avatarIcon = c.avatar || '🍎';
-      elements.push({
-        data: {
-          id: c.id,
-          name: c.name,
-          color: tierColor,
-          tier: c.tier,
-          avatar: avatarIcon,
-          bgImage: getEmojiSvgDataUrl(avatarIcon),
-          contact: c
-        }
-      });
+    // Group contacts by tier to distribute evenly on concentric rings
+    const tierGroups = {
+      lovers: [],
+      close_friends: [],
+      family: [],
+      friends: [],
+      acquaintances: []
+    };
 
-      elements.push({
-        data: {
-          source: 'me',
-          target: c.id,
-          color: tierColor
-        }
+    contacts.forEach(c => {
+      const t = c.tier || 'acquaintances';
+      if (!tierGroups[t]) tierGroups[t] = [];
+      tierGroups[t].push(c);
+    });
+
+    Object.keys(tierGroups).forEach(tierKey => {
+      const group = tierGroups[tierKey];
+      const radius = TIER_RADII[tierKey] || 500;
+      const count = group.length;
+
+      group.forEach((c, index) => {
+        // Distribute angle evenly around concentric circle
+        const angle = (2 * Math.PI * index) / (count || 1) - (Math.PI / 2);
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+
+        const tierColor = TIER_CONFIG[c.tier]?.color || '#ffffff';
+        const avatarIcon = c.avatar || '🍎';
+
+        elements.push({
+          data: {
+            id: c.id,
+            name: c.name,
+            color: tierColor,
+            tier: c.tier,
+            avatar: avatarIcon,
+            bgImage: getEmojiSvgDataUrl(avatarIcon),
+            contact: c
+          },
+          position: { x, y }
+        });
+
+        elements.push({
+          data: {
+            source: 'me',
+            target: c.id,
+            color: tierColor
+          }
+        });
       });
     });
 
@@ -55,7 +92,7 @@ export function createGraphManager(containerEl, onSelectNode) {
       container: containerEl,
       elements: elements,
       style: [
-        /* Obsidian Node Circle with Icon Profile Inside */
+        /* Dunbar Orbital Concentric Circle Styling */
         {
           selector: 'node',
           style: {
@@ -82,13 +119,13 @@ export function createGraphManager(containerEl, onSelectNode) {
         {
           selector: 'node[?isMe]',
           style: {
-            'width': 78,
-            'height': 78,
-            'border-width': 5,
+            'width': 82,
+            'height': 82,
+            'border-width': 6,
             'border-color': '#ffd700',
             'font-weight': '800',
             'font-size': '15px',
-            'shadow-blur': 35,
+            'shadow-blur': 40,
             'shadow-color': '#ffd700',
             'shadow-opacity': 0.95
           }
@@ -96,10 +133,10 @@ export function createGraphManager(containerEl, onSelectNode) {
         {
           selector: 'edge',
           style: {
-            'width': 2.8,
+            'width': 2.5,
             'line-color': 'data(color)',
             'curve-style': 'bezier',
-            'opacity': 0.65,
+            'opacity': 0.55,
             'line-dash-pattern': [6, 4],
             'target-arrow-shape': 'none'
           }
@@ -109,19 +146,17 @@ export function createGraphManager(containerEl, onSelectNode) {
           style: {
             'border-width': 6,
             'border-color': '#ffffff',
-            'shadow-blur': 40,
+            'shadow-blur': 45,
             'shadow-opacity': 1.0,
-            'scale': 1.15
+            'scale': 1.18
           }
         }
       ],
       layout: {
-        name: 'cose',
+        name: 'preset',
         animate: true,
-        animationDuration: 1000,
-        animationEasing: 'ease-out-cubic',
-        nodeRepulsion: 12000,
-        idealEdgeLength: 160
+        animationDuration: 800,
+        animationEasing: 'ease-out-cubic'
       }
     });
 
