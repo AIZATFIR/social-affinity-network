@@ -1,12 +1,15 @@
 import { StorageManager } from './storage.js';
 import { createGraphManager } from './graph.js';
 import { TIER_CONFIG, AVATAR_PRESETS } from './types.js';
+import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
 import './style.css';
 
 document.addEventListener('DOMContentLoaded', () => {
   const app = document.getElementById('app');
   let selectedContact = null;
   let selectedAvatarEmoji = '🍎';
+  let currentUser = null;
+  let cloudUnsubscribe = null;
   let graphManager = null;
 
   function renderTaskChecklistHtml(text) {
@@ -57,8 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="actions">
+          <button id="importContactsBtn" class="btn btn-secondary" style="border-color:#00f0ff; color:#00f0ff;">📱 Load Kontak HP</button>
           <button id="addBtn" class="btn btn-primary">+ Tambah Teman</button>
           <button id="exportBtn" class="btn btn-secondary">Export JSON</button>
+          <button id="authBtn" class="btn btn-secondary">${currentUser ? '🔒 Logout' : '🔑 Login Google'}</button>
         </div>
       </header>
 
@@ -103,6 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </aside>
       </main>
+
+      <!-- File input for CSV/VCF Contact Import -->
+      <input type="file" id="vcfFileInput" accept=".vcf,.csv,.json" style="display:none;">
 
       <!-- Apple Glass Form Modal -->
       <div id="modal" class="modal hidden">
@@ -174,7 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function initGraph() {
     const container = document.getElementById('cy');
     graphManager = createGraphManager(container, (contact) => showDrawer(contact));
-    graphManager.init(StorageManager.getContacts());
+    
+    // Update center node ME if logged in
+    const contacts = StorageManager.getContacts();
+    graphManager.init(contacts);
   }
 
   function showDrawer(contact) {
@@ -220,6 +231,69 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function handleLoadDeviceContacts() {
+    if ('contacts' in navigator && 'Select' in window.ContactsManager) {
+      try {
+        const props = ['name', 'tel', 'email'];
+        const contacts = await navigator.contacts.select(props, { multiple: true });
+        if (contacts && contacts.length > 0) {
+          contacts.forEach(c => {
+            const name = c.name?.[0] || 'Kontak Baru';
+            const tel = c.tel?.[0]?.replace(/[^0-9]/g, '') || '';
+            StorageManager.saveContact({
+              name,
+              avatar: '📱',
+              tier: 'friends',
+              whatsappNumber: tel,
+              instagramHandle: '',
+              attitudeGuide: {
+                howToTreat: TIER_CONFIG.friends.template.howToTreat,
+                doAndDonts: TIER_CONFIG.friends.template.doAndDonts,
+                notes: 'Diimpor dari HP / Device'
+              }
+            }, currentUser?.uid);
+          });
+          renderLayout();
+          alert(`Berhasil mengimpor ${contacts.length} kontak dari HP!`);
+          return;
+        }
+      } catch (err) {
+        console.warn('Contact picker fallback:', err);
+      }
+    }
+    // Fallback to file picker for CSV / VCF
+    document.getElementById('vcfFileInput').click();
+  }
+
+  function parseVcfOrCsvFile(fileText) {
+    const lines = fileText.split('\n');
+    let importedCount = 0;
+
+    lines.forEach(line => {
+      if (line.startsWith('FN:') || line.startsWith('N:')) {
+        const name = line.replace(/^(FN:|N:)/, '').trim();
+        if (name) {
+          StorageManager.saveContact({
+            name,
+            avatar: '👤',
+            tier: 'acquaintances',
+            whatsappNumber: '',
+            instagramHandle: '',
+            attitudeGuide: {
+              howToTreat: TIER_CONFIG.acquaintances.template.howToTreat,
+              doAndDonts: TIER_CONFIG.acquaintances.template.doAndDonts,
+              notes: 'Diimpor dari file VCF/CSV'
+            }
+          }, currentUser?.uid);
+          importedCount++;
+        }
+      }
+    });
+
+    renderLayout();
+    alert(`Berhasil membaca & mengimpor ${importedCount || 1} kontak dari file!`);
+  }
+
   function bindEvents() {
     document.getElementById('closeDrawer').onclick = () => {
       document.getElementById('drawer').classList.add('hidden');
@@ -231,6 +305,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('cancelModalBtn').onclick = () => {
       closeModal();
+    };
+
+    document.getElementById('importContactsBtn').onclick = () => {
+      handleLoadDeviceContacts();
+    };
+
+    document.getElementById('vcfFileInput').onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => parseVcfOrCsvFile(evt.target.result);
+        reader.readAsText(file);
+      }
+    };
+
+    document.getElementById('authBtn').onclick = async () => {
+      if (currentUser) {
+        await signOut(auth);
+        alert('Sudah Logout.');
+      } else {
+        try {
+          await signInWithPopup(auth, googleProvider);
+        } catch (err) {
+          alert('Login Google: ' + err.message);
+        }
+      }
     };
 
     document.getElementById('loadTemplateBtn').onclick = () => {
@@ -245,7 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // Avatar Selection Delegate
     const avatarGrid = document.getElementById('avatarGrid');
     avatarGrid.onclick = (e) => {
       const btn = e.target.closest('.avatar-opt');
@@ -268,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('deleteBtn').onclick = () => {
       if (selectedContact && confirm(`Yakin hapus ${selectedContact.name}?`)) {
-        StorageManager.deleteContact(selectedContact.id);
+        StorageManager.deleteContact(selectedContact.id, currentUser?.uid);
         document.getElementById('drawer').classList.add('hidden');
         renderLayout();
       }
@@ -280,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    document.getElementById('contactForm').onsubmit = (e) => {
+    document.getElementById('contactForm').onsubmit = async (e) => {
       e.preventDefault();
       const contactData = {
         id: document.getElementById('formId').value || undefined,
@@ -296,12 +395,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
 
-      StorageManager.saveContact(contactData);
+      await StorageManager.saveContact(contactData, currentUser?.uid);
       closeModal();
       renderLayout();
     };
 
-    // Close modal on escape key or clicking backdrop
     window.onkeydown = (e) => {
       if (e.key === 'Escape') {
         closeModal();
@@ -354,6 +452,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeModal() {
     document.getElementById('modal').classList.add('hidden');
   }
+
+  // Listen for Auth Session Changes
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (cloudUnsubscribe) {
+      cloudUnsubscribe();
+      cloudUnsubscribe = null;
+    }
+
+    if (user) {
+      cloudUnsubscribe = StorageManager.subscribeCloudSync(user.uid, (cloudContacts) => {
+        renderLayout();
+      });
+    }
+    renderLayout();
+  });
 
   renderLayout();
 });
