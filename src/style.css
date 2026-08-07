@@ -1,7 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+/* --- Base Styles & Theme Variables --- */
 :root {
-  /* Apple Dark & Vibrant HSL Accent System */
+  --bg-light: #FDFBF7;
+  --bg-dark: #121212;
+  --primary: #6366f1;
+  --orbit-intimate: #FFB5C5;
+  --orbit-close: #FFD97D;
+  --orbit-family: #A0D6B4;
+  --orbit-friends: #9DC6E0;
+  --orbit-acquaintances: #64748b;
+  
+  /* Legacy Apple Dark & Vibrant HSL Accent System */
   --bg-deep: #060913;
   --bg-canvas: radial-gradient(circle at 50% 40%, #10192d 0%, #060913 100%);
   --panel-glass: rgba(18, 26, 44, 0.72);
@@ -12,11 +22,10 @@
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
 
-  /* Vibrant Tier Accents */
-  --tier-lovers: #ff2a6d;
-  --tier-close: #00f0ff;
-  --tier-family: #10b981;
-  --tier-friends: #8b5cf6;
+  --tier-lovers: #FFB5C5;
+  --tier-close: #FFD97D;
+  --tier-family: #A0D6B4;
+  --tier-friends: #9DC6E0;
   --tier-acquaintances: #64748b;
 
   --radius-xl: 24px;
@@ -27,6 +36,84 @@
   --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
   --shadow-apple-lg: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.2);
   --shadow-apple-glow: 0 0 25px rgba(0, 240, 255, 0.25);
+}
+
+/* --- Parchment Background Texture Utility --- */
+.bg-parchment {
+  background-color: #FDFBF7;
+  background-image: radial-gradient(#e2e8f0 0.75px, transparent 0.75px), radial-gradient(#e2e8f0 0.75px, #FDFBF7 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.dark .bg-parchment {
+  background-color: #121212;
+  background-image: radial-gradient(#262626 0.75px, transparent 0.75px), radial-gradient(#262626 0.75px, #121212 0.75px);
+}
+
+.parchment-texture {
+  background-color: #FDFBF7;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .parchment-texture {
+  background-color: #121212;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* --- Orbit Container Aspect Ratio & Ring Styles --- */
+.orbit-container {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbit-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1.5px dashed rgba(148, 163, 184, 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.orbit-ring-dashed {
+  border-style: dashed;
+}
+
+.dark .orbit-ring {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Floating Avatar Animations --- */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 3.5s ease-in-out 0.5s infinite;
+}
+
+.animate-float-slow {
+  animation: float 4s ease-in-out 1s infinite;
 }
 
 * {
