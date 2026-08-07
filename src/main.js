@@ -1,473 +1,360 @@
 import { StorageManager } from './storage.js';
-import { createGraphManager } from './graph.js';
-import { TIER_CONFIG, AVATAR_PRESETS } from './types.js';
+import { TIER_CONFIG } from './types.js';
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase.js';
+
+import { renderOrbitDashboard } from './components/orbitDashboard.js';
+import { renderFullscreenOrbit } from './components/fullscreenOrbit.js';
+import { renderMyCircles } from './components/myCircles.js';
+import { renderNetworkInsights } from './components/networkInsights.js';
+import { renderKinshipProfileDrawer } from './components/kinshipProfile.js';
+import { renderContactModal } from './components/contactModal.js';
+
 import './style.css';
 
 document.addEventListener('DOMContentLoaded', () => {
   const app = document.getElementById('app');
-  let selectedContact = null;
-  let selectedAvatarEmoji = '🍎';
+
+  // Application State
+  let activeTab = 'orbit'; // 'orbit' | 'circles' | 'insights' | 'fullscreen'
+  let selectedTierFilter = 'all';
+  let searchQuery = '';
+  let selectedContactId = null;
+  let editingContact = null;
+  let isModalOpen = false;
   let currentUser = null;
   let cloudUnsubscribe = null;
-  let graphManager = null;
 
-  function renderTaskChecklistHtml(text) {
-    if (!text || !text.trim()) return '<div class="empty-guide">Belum ada catatan.</div>';
-    
-    const lines = text.split('\n').filter(l => l.trim().length > 0);
-    return `
-      <ul class="task-list">
-        ${lines.map(line => {
-          let badgeClass = 'priority-normal';
-          if (line.includes('🔥') || line.includes('[Tinggi]')) badgeClass = 'priority-high';
-          else if (line.includes('⚡') || line.includes('[Sedang]')) badgeClass = 'priority-medium';
-          else if (line.includes('✅')) badgeClass = 'task-do';
-          else if (line.includes('❌')) badgeClass = 'task-dont';
-
-          return `
-            <li class="task-item ${badgeClass}">
-              <span class="task-bullet"></span>
-              <span class="task-text">${escapeHtml(line)}</span>
-            </li>
-          `;
-        }).join('')}
-      </ul>
-    `;
-  }
-
-  function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
-  function renderLayout() {
-    const stats = StorageManager.getCapacityStats();
-    
-    app.innerHTML = `
-      <header class="navbar">
-        <div class="logo">
-          <div class="logo-badge">🌌</div>
-          <h1>Social Affinity Network</h1>
-        </div>
-        
-        <div class="capacity-gauge">
-          ${Object.entries(stats).map(([key, s]) => `
-            <div class="gauge-item" title="${s.name} (Rekomendasi Kapasitas: ${s.recMax})">
-              <span class="dot" style="background: ${s.color}; color: ${s.color}"></span>
-              <span class="label">${s.name.split(' ')[0]}: ${s.count} <small style="opacity:0.7">(Rec: ${s.recMax})</small></span>
-            </div>
-          `).join('')}
-        </div>
-
-        <div class="actions">
-          <button id="importContactsBtn" class="btn btn-secondary" style="border-color:#00f0ff; color:#00f0ff;">📱 Load Kontak HP</button>
-          <button id="addBtn" class="btn btn-primary">+ Tambah Teman</button>
-          <button id="exportBtn" class="btn btn-secondary">Export JSON</button>
-          <button id="authBtn" class="btn btn-secondary">${currentUser ? '🔒 Logout' : '🔑 Login Google'}</button>
-        </div>
-      </header>
-
-      <main class="main-container">
-        <div id="cy" class="cy-container"></div>
-        
-        <aside id="drawer" class="drawer hidden">
-          <div class="drawer-header">
-            <h2 id="drawerName">Detail Kontak</h2>
-            <button id="closeDrawer" class="btn-icon">&times;</button>
-          </div>
-          <div class="drawer-content">
-            <div class="profile-card">
-              <div id="drawerAvatar" class="avatar-large"></div>
-              <span id="drawerTierBadge" class="badge"></span>
-            </div>
-
-            <div class="quick-links">
-              <a id="waLink" href="#" target="_blank" class="btn-wa">💬 WhatsApp</a>
-              <a id="igLink" href="#" target="_blank" class="btn-ig">📸 Instagram</a>
-            </div>
-
-            <div class="guide-section">
-              <h3>🎯 Prioritas & Cara Bersikap</h3>
-              <div id="drawerHowToTreat" class="guide-box"></div>
-            </div>
-
-            <div class="guide-section">
-              <h3>⚡ Checklist Do & Don'ts</h3>
-              <div id="drawerDoAndDonts" class="guide-box"></div>
-            </div>
-
-            <div class="guide-section">
-              <h3>📝 Catatan & Detail</h3>
-              <div id="drawerNotes" class="guide-box"></div>
-            </div>
-
-            <div class="drawer-actions">
-              <button id="editBtn" class="btn btn-secondary" style="flex:1">Edit Kontak</button>
-              <button id="deleteBtn" class="btn btn-danger" style="flex:1">Hapus</button>
-            </div>
-          </div>
-        </aside>
-      </main>
-
-      <!-- File input for CSV/VCF Contact Import -->
-      <input type="file" id="vcfFileInput" accept=".vcf,.csv,.json" style="display:none;">
-
-      <!-- Apple Glass Form Modal -->
-      <div id="modal" class="modal hidden">
-        <div class="modal-content">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h2 id="modalTitle" style="margin:0;">Tambah Kontak Baru</h2>
-            <button type="button" id="loadTemplateBtn" class="btn btn-secondary" style="font-size:0.78rem; padding:4px 10px;">✨ Isi Template Prioritas</button>
-          </div>
-          
-          <form id="contactForm">
-            <input type="hidden" id="formId">
-            
-            <div class="form-group">
-              <label>Pilih Avatar / Icon Profile (Buah & Kategori)</label>
-              <div class="avatar-grid" id="avatarGrid">
-                ${AVATAR_PRESETS.map(a => `
-                  <button type="button" class="avatar-opt ${a.emoji === selectedAvatarEmoji ? 'selected' : ''}" data-emoji="${a.emoji}" title="${a.label}">
-                    ${a.emoji}
-                  </button>
-                `).join('')}
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Nama / Panggilan</label>
-              <input type="text" id="formName" required placeholder="Contoh: Sarah">
-            </div>
-            <div class="form-group">
-              <label>Kategori Affinity (Tier & Rekomendasi)</label>
-              <select id="formTier">
-                ${Object.entries(TIER_CONFIG).map(([k, v]) => `
-                  <option value="${k}">${v.name} (${v.description})</option>
-                `).join('')}
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Nomor WhatsApp (Contoh: 628123456789)</label>
-              <input type="text" id="formWa" placeholder="628123456789">
-            </div>
-            <div class="form-group">
-              <label>Username Instagram (tanpa @)</label>
-              <input type="text" id="formIg" placeholder="username">
-            </div>
-            <div class="form-group">
-              <label>Prioritas & Cara Bersikap (Gunakan baris baru untuk tiap poin)</label>
-              <textarea id="formHowToTreat" rows="3" placeholder="🔥 [Tinggi] Tanyakan kabar harian...&#10;⚡ [Sedang] Apresiasi usaha..."></textarea>
-            </div>
-            <div class="form-group">
-              <label>Checklist Do & Don'ts (Gunakan baris baru)</label>
-              <textarea id="formDoAndDonts" rows="3" placeholder="✅ DO: Kirim ucapan selamat pagi...&#10;❌ DONT: Membahas masalah berat saat lelah..."></textarea>
-            </div>
-            <div class="form-group">
-              <label>Catatan & Detail Tambahan</label>
-              <textarea id="formNotes" rows="3" placeholder="📌 Suka es krim matcha...&#10;📌 Tanggal Ultah..."></textarea>
-            </div>
-            <div class="modal-actions">
-              <button type="button" id="cancelModalBtn" class="btn btn-secondary">Batal</button>
-              <button type="submit" class="btn btn-primary">Simpan Kontak</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
-
-    bindEvents();
-    initGraph();
-  }
-
-  function initGraph() {
-    const container = document.getElementById('cy');
-    graphManager = createGraphManager(container, (contact) => showDrawer(contact));
-    
-    // Update center node ME if logged in
-    const contacts = StorageManager.getContacts();
-    graphManager.init(contacts);
-  }
-
-  function showDrawer(contact) {
-    selectedContact = contact;
-    const drawer = document.getElementById('drawer');
-    drawer.classList.remove('hidden');
-
-    document.getElementById('drawerName').textContent = contact.name;
-    document.getElementById('drawerAvatar').textContent = contact.avatar || '🍎';
-    
-    const badge = document.getElementById('drawerTierBadge');
-    const tierInfo = TIER_CONFIG[contact.tier] || {};
-    badge.textContent = tierInfo.name || contact.tier;
-    badge.style.background = tierInfo.color || '#888';
-
-    const waBtn = document.getElementById('waLink');
-    if (contact.whatsappNumber) {
-      waBtn.href = `https://wa.me/${contact.whatsappNumber}`;
-      waBtn.style.display = 'inline-flex';
-    } else {
-      waBtn.style.display = 'none';
-    }
-
-    const igBtn = document.getElementById('igLink');
-    if (contact.instagramHandle) {
-      igBtn.href = `https://instagram.com/${contact.instagramHandle}`;
-      igBtn.style.display = 'inline-flex';
-    } else {
-      igBtn.style.display = 'none';
-    }
-
-    document.getElementById('drawerHowToTreat').innerHTML = renderTaskChecklistHtml(contact.attitudeGuide?.howToTreat);
-    document.getElementById('drawerDoAndDonts').innerHTML = renderTaskChecklistHtml(contact.attitudeGuide?.doAndDonts);
-    document.getElementById('drawerNotes').innerHTML = renderTaskChecklistHtml(contact.attitudeGuide?.notes);
-  }
-
-  function applyTierTemplate(tierKey) {
-    const config = TIER_CONFIG[tierKey];
-    if (config && config.template) {
-      document.getElementById('formHowToTreat').value = config.template.howToTreat;
-      document.getElementById('formDoAndDonts').value = config.template.doAndDonts;
-      document.getElementById('formNotes').value = config.template.notes;
-    }
-  }
-
-  async function handleLoadDeviceContacts() {
-    if ('contacts' in navigator && 'Select' in window.ContactsManager) {
-      try {
-        const props = ['name', 'tel', 'email'];
-        const contacts = await navigator.contacts.select(props, { multiple: true });
-        if (contacts && contacts.length > 0) {
-          contacts.forEach(c => {
-            const name = c.name?.[0] || 'Kontak Baru';
-            const tel = c.tel?.[0]?.replace(/[^0-9]/g, '') || '';
-            StorageManager.saveContact({
-              name,
-              avatar: '📱',
-              tier: 'friends',
-              whatsappNumber: tel,
-              instagramHandle: '',
-              attitudeGuide: {
-                howToTreat: TIER_CONFIG.friends.template.howToTreat,
-                doAndDonts: TIER_CONFIG.friends.template.doAndDonts,
-                notes: 'Diimpor dari HP / Device'
-              }
-            }, currentUser?.uid);
-          });
-          renderLayout();
-          alert(`Berhasil mengimpor ${contacts.length} kontak dari HP!`);
-          return;
-        }
-      } catch (err) {
-        console.warn('Contact picker fallback:', err);
-      }
-    }
-    // Fallback to file picker for CSV / VCF
-    document.getElementById('vcfFileInput').click();
-  }
-
-  function parseVcfOrCsvFile(fileText) {
-    const lines = fileText.split('\n');
-    let importedCount = 0;
-
-    lines.forEach(line => {
-      if (line.startsWith('FN:') || line.startsWith('N:')) {
-        const name = line.replace(/^(FN:|N:)/, '').trim();
-        if (name) {
-          StorageManager.saveContact({
-            name,
-            avatar: '👤',
-            tier: 'acquaintances',
-            whatsappNumber: '',
-            instagramHandle: '',
-            attitudeGuide: {
-              howToTreat: TIER_CONFIG.acquaintances.template.howToTreat,
-              doAndDonts: TIER_CONFIG.acquaintances.template.doAndDonts,
-              notes: 'Diimpor dari file VCF/CSV'
-            }
-          }, currentUser?.uid);
-          importedCount++;
-        }
-      }
-    });
-
-    renderLayout();
-    alert(`Berhasil membaca & mengimpor ${importedCount || 1} kontak dari file!`);
-  }
-
-  function bindEvents() {
-    document.getElementById('closeDrawer').onclick = () => {
-      document.getElementById('drawer').classList.add('hidden');
-    };
-
-    document.getElementById('addBtn').onclick = () => {
-      openModal();
-    };
-
-    document.getElementById('cancelModalBtn').onclick = () => {
-      closeModal();
-    };
-
-    document.getElementById('importContactsBtn').onclick = () => {
-      handleLoadDeviceContacts();
-    };
-
-    document.getElementById('vcfFileInput').onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (evt) => parseVcfOrCsvFile(evt.target.result);
-        reader.readAsText(file);
-      }
-    };
-
-    document.getElementById('authBtn').onclick = async () => {
-      if (currentUser) {
-        await signOut(auth);
-        alert('Sudah Logout.');
-      } else {
-        try {
-          await signInWithPopup(auth, googleProvider);
-        } catch (err) {
-          alert('Login Google: ' + err.message);
-        }
-      }
-    };
-
-    document.getElementById('loadTemplateBtn').onclick = () => {
-      const tierKey = document.getElementById('formTier').value;
-      applyTierTemplate(tierKey);
-    };
-
-    document.getElementById('formTier').onchange = (e) => {
-      const currentHowTo = document.getElementById('formHowToTreat').value;
-      if (!currentHowTo.trim()) {
-        applyTierTemplate(e.target.value);
-      }
-    };
-
-    const avatarGrid = document.getElementById('avatarGrid');
-    avatarGrid.onclick = (e) => {
-      const btn = e.target.closest('.avatar-opt');
-      if (btn) {
-        avatarGrid.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        selectedAvatarEmoji = btn.dataset.emoji;
-      }
-    };
-
-    document.getElementById('exportBtn').onclick = () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(StorageManager.getContacts(), null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `social-affinity-export.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    };
-
-    document.getElementById('deleteBtn').onclick = () => {
-      if (selectedContact && confirm(`Yakin hapus ${selectedContact.name}?`)) {
-        StorageManager.deleteContact(selectedContact.id, currentUser?.uid);
-        document.getElementById('drawer').classList.add('hidden');
-        renderLayout();
-      }
-    };
-
-    document.getElementById('editBtn').onclick = () => {
-      if (selectedContact) {
-        openModal(selectedContact);
-      }
-    };
-
-    document.getElementById('contactForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const contactData = {
-        id: document.getElementById('formId').value || undefined,
-        name: document.getElementById('formName').value,
-        avatar: selectedAvatarEmoji,
-        tier: document.getElementById('formTier').value,
-        whatsappNumber: document.getElementById('formWa').value,
-        instagramHandle: document.getElementById('formIg').value,
-        attitudeGuide: {
-          howToTreat: document.getElementById('formHowToTreat').value,
-          doAndDonts: document.getElementById('formDoAndDonts').value,
-          notes: document.getElementById('formNotes').value
-        }
-      };
-
-      await StorageManager.saveContact(contactData, currentUser?.uid);
-      closeModal();
-      renderLayout();
-    };
-
-    window.onkeydown = (e) => {
-      if (e.key === 'Escape') {
-        closeModal();
-        document.getElementById('drawer').classList.add('hidden');
-      }
-    };
-
-    document.getElementById('modal').onclick = (e) => {
-      if (e.target.id === 'modal') {
-        closeModal();
-      }
-    };
-  }
-
-  function openModal(contact = null) {
-    const modal = document.getElementById('modal');
-    modal.classList.remove('hidden');
-    
-    if (contact) {
-      document.getElementById('modalTitle').textContent = 'Edit Kontak';
-      document.getElementById('formId').value = contact.id;
-      document.getElementById('formName').value = contact.name;
-      selectedAvatarEmoji = contact.avatar || '🍎';
-      document.getElementById('formTier').value = contact.tier;
-      document.getElementById('formWa').value = contact.whatsappNumber || '';
-      document.getElementById('formIg').value = contact.instagramHandle || '';
-      document.getElementById('formHowToTreat').value = contact.attitudeGuide?.howToTreat || '';
-      document.getElementById('formDoAndDonts').value = contact.attitudeGuide?.doAndDonts || '';
-      document.getElementById('formNotes').value = contact.attitudeGuide?.notes || '';
-    } else {
-      document.getElementById('modalTitle').textContent = 'Tambah Kontak Baru';
-      document.getElementById('contactForm').reset();
-      document.getElementById('formId').value = '';
-      selectedAvatarEmoji = '🍎';
-      applyTierTemplate('lovers');
-    }
-
-    const avatarGrid = document.getElementById('avatarGrid');
-    if (avatarGrid) {
-      avatarGrid.querySelectorAll('.avatar-opt').forEach(b => {
-        if (b.dataset.emoji === selectedAvatarEmoji) {
-          b.classList.add('selected');
-        } else {
-          b.classList.remove('selected');
-        }
-      });
-    }
-  }
-
-  function closeModal() {
-    document.getElementById('modal').classList.add('hidden');
-  }
-
-  // Listen for Auth Session Changes
+  // Initialize Auth Listener
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (cloudUnsubscribe) {
       cloudUnsubscribe();
       cloudUnsubscribe = null;
     }
-
     if (user) {
-      cloudUnsubscribe = StorageManager.subscribeCloudSync(user.uid, (cloudContacts) => {
-        renderLayout();
+      cloudUnsubscribe = StorageManager.subscribeCloudSync(user.uid, () => {
+        renderApp();
       });
     }
-    renderLayout();
+    renderApp();
   });
 
-  renderLayout();
+  function renderApp() {
+    const contacts = StorageManager.getContacts();
+    const stats = StorageManager.getCapacityStats();
+    const selectedContact = contacts.find(c => c.id === selectedContactId) || null;
+
+    app.innerHTML = `
+      <div class="min-h-screen bg-parchment flex flex-col font-display text-slate-800 dark:text-slate-100 selection:bg-indigo-500 selection:text-white">
+        
+        <!-- Sticky Top Header Navbar -->
+        <header class="sticky top-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 py-3">
+          <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            
+            <div class="flex items-center gap-3 cursor-pointer" id="brandLogo">
+              <div class="w-10 h-10 rounded-2xl bg-indigo-600 shadow-md shadow-indigo-500/30 flex items-center justify-center text-white text-xl font-bold">
+                🌌
+              </div>
+              <div>
+                <h1 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Social Circle Manager</h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Dunbar's Kinship Orbit System</p>
+              </div>
+            </div>
+
+            <!-- Top Actions -->
+            <div class="flex items-center gap-2">
+              ${'contacts' in navigator && 'Select' in window.ContactsManager ? `
+                <button id="importContactsBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-2xl transition-all flex items-center gap-1 border border-indigo-200 dark:border-indigo-800">
+                  <span class="material-icons text-sm">contacts</span>
+                  <span class="hidden sm:inline">Import HP</span>
+                </button>
+              ` : ''}
+
+              <button id="addContactBtn" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1">
+                <span class="material-icons text-base">add</span>
+                <span class="hidden sm:inline">Tambah Teman</span>
+              </button>
+
+              <button id="authBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-2xl transition-all flex items-center gap-1">
+                <span class="material-icons text-sm">${currentUser ? 'lock' : 'vpn_key'}</span>
+                <span>${currentUser ? 'Logout' : 'Login'}</span>
+              </button>
+
+              <button id="themeToggleBtn" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 transition-all">
+                <span class="material-icons text-sm">dark_mode</span>
+              </button>
+            </div>
+
+          </div>
+        </header>
+
+        <!-- Main Body View Area -->
+        <main class="flex-1 max-w-4xl mx-auto w-full px-4 pt-4 pb-28">
+          ${renderActiveView(contacts)}
+        </main>
+
+        <!-- Fixed Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 inset-x-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 py-2.5 px-6 z-40">
+          <div class="max-w-md mx-auto flex justify-around items-center">
+            
+            <button data-tab="orbit" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'orbit' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
+              <span class="material-icons text-xl">blur_on</span>
+              <span class="text-[10px] uppercase tracking-wider">Orbit</span>
+            </button>
+
+            <button data-tab="fullscreen" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'fullscreen' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
+              <span class="material-icons text-xl">fullscreen</span>
+              <span class="text-[10px] uppercase tracking-wider">Canvas</span>
+            </button>
+
+            <button data-tab="circles" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'circles' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
+              <span class="material-icons text-xl">groups</span>
+              <span class="text-[10px] uppercase tracking-wider">Circles</span>
+            </button>
+
+            <button data-tab="insights" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'insights' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
+              <span class="material-icons text-xl">analytics</span>
+              <span class="text-[10px] uppercase tracking-wider">Stats</span>
+            </button>
+
+          </div>
+        </nav>
+
+        <!-- Slide-over Kinship Profile Drawer -->
+        ${selectedContact ? renderKinshipProfileDrawer(selectedContact) : ''}
+
+        <!-- Add/Edit Contact Modal -->
+        ${isModalOpen ? renderContactModal(editingContact) : ''}
+
+      </div>
+    `;
+
+    attachEventListeners();
+  }
+
+  function renderActiveView(contacts) {
+    switch (activeTab) {
+      case 'orbit':
+        return renderOrbitDashboard(contacts, selectedTierFilter, searchQuery);
+      case 'fullscreen':
+        return renderFullscreenOrbit(contacts);
+      case 'circles':
+        return renderMyCircles(contacts);
+      case 'insights':
+        return renderNetworkInsights(contacts);
+      default:
+        return renderOrbitDashboard(contacts, selectedTierFilter, searchQuery);
+    }
+  }
+
+  function attachEventListeners() {
+    // Brand click returns to main orbit
+    document.getElementById('brandLogo')?.addEventListener('click', () => {
+      activeTab = 'orbit';
+      renderApp();
+    });
+
+    // Theme Toggle
+    document.getElementById('themeToggleBtn')?.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // Navigation Tab Switching
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tab = e.currentTarget.getAttribute('data-tab');
+        if (tab) {
+          activeTab = tab;
+          renderApp();
+        }
+      });
+    });
+
+    // Dashboard Buttons
+    document.getElementById('btnOpenCircles')?.addEventListener('click', () => {
+      activeTab = 'circles';
+      renderApp();
+    });
+    document.getElementById('btnOpenInsights')?.addEventListener('click', () => {
+      activeTab = 'insights';
+      renderApp();
+    });
+
+    // Filter Chips
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        selectedTierFilter = e.currentTarget.getAttribute('data-filter') || 'all';
+        renderApp();
+      });
+    });
+
+    // Search Input
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        const container = document.querySelector('.orbit-container');
+        if (container) {
+          const contacts = StorageManager.getContacts();
+          const lovers = contacts.filter(c => c.tier === 'lovers');
+          const closeFriends = contacts.filter(c => c.tier === 'close_friends');
+          const family = contacts.filter(c => c.tier === 'family');
+          const friends = contacts.filter(c => c.tier === 'friends');
+          const acquaintances = contacts.filter(c => c.tier === 'acquaintances');
+        }
+      });
+    }
+
+    // Contact Avatar Click (Opens Profile Drawer)
+    document.querySelectorAll('.contact-orbit-avatar, .contact-chip-item').forEach(elem => {
+      elem.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-contact-id');
+        if (id) {
+          selectedContactId = id;
+          renderApp();
+        }
+      });
+    });
+
+    // Drawer Controls
+    document.getElementById('btnCloseDrawer')?.addEventListener('click', () => {
+      selectedContactId = null;
+      renderApp();
+    });
+    document.getElementById('profileDrawerBackdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'profileDrawerBackdrop') {
+        selectedContactId = null;
+        renderApp();
+      }
+    });
+
+    // Edit Contact
+    document.getElementById('btnEditContact')?.addEventListener('click', () => {
+      const contacts = StorageManager.getContacts();
+      editingContact = contacts.find(c => c.id === selectedContactId) || null;
+      selectedContactId = null;
+      isModalOpen = true;
+      renderApp();
+    });
+
+    // Delete Contact
+    document.getElementById('btnDeleteContact')?.addEventListener('click', async () => {
+      if (selectedContactId && confirm('Apakah Anda yakin ingin menghapus kontak ini?')) {
+        await StorageManager.deleteContact(selectedContactId, currentUser?.uid);
+        selectedContactId = null;
+        renderApp();
+      }
+    });
+
+    // Modal Controls
+    document.getElementById('addContactBtn')?.addEventListener('click', () => {
+      editingContact = null;
+      isModalOpen = true;
+      renderApp();
+    });
+    document.getElementById('btnQuickAdd')?.addEventListener('click', () => {
+      editingContact = null;
+      isModalOpen = true;
+      renderApp();
+    });
+    document.getElementById('btnCloseModal')?.addEventListener('click', () => {
+      isModalOpen = false;
+      editingContact = null;
+      renderApp();
+    });
+    document.getElementById('btnCancelModal')?.addEventListener('click', () => {
+      isModalOpen = false;
+      editingContact = null;
+      renderApp();
+    });
+
+    // Avatar Selector in Modal
+    document.querySelectorAll('.avatar-preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const emoji = e.currentTarget.getAttribute('data-avatar');
+        document.querySelectorAll('.avatar-preset-btn').forEach(b => {
+          b.classList.remove('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110');
+          b.classList.add('border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-800');
+        });
+        e.currentTarget.classList.add('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110');
+        const input = document.getElementById('selectedAvatarInput');
+        if (input) input.value = emoji;
+      });
+    });
+
+    // Contact Form Submit
+    document.getElementById('contactForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const contactData = {
+        id: formData.get('id') || Date.now().toString(),
+        name: formData.get('name'),
+        avatar: formData.get('avatar') || '🍎',
+        tier: formData.get('tier'),
+        whatsappNumber: formData.get('whatsappNumber'),
+        instagramHandle: formData.get('instagramHandle'),
+        attitudeGuide: {
+          howToTreat: formData.get('howToTreat') || TIER_CONFIG[formData.get('tier')]?.template.howToTreat,
+          doAndDonts: TIER_CONFIG[formData.get('tier')]?.template.doAndDonts,
+          notes: formData.get('notes') || TIER_CONFIG[formData.get('tier')]?.template.notes
+        },
+        createdAt: editingContact?.createdAt || new Date().toISOString()
+      };
+
+      await StorageManager.saveContact(contactData, currentUser?.uid);
+      isModalOpen = false;
+      editingContact = null;
+      renderApp();
+    });
+
+    // Fullscreen view back button
+    document.getElementById('btnCloseFullscreen')?.addEventListener('click', () => {
+      activeTab = 'orbit';
+      renderApp();
+    });
+
+    // Auth Button
+    document.getElementById('authBtn')?.addEventListener('click', async () => {
+      if (currentUser) {
+        await signOut(auth);
+      } else {
+        try {
+          await signInWithPopup(auth, googleProvider);
+        } catch (err) {
+          console.warn('Auth popup error:', err);
+        }
+      }
+    });
+
+    // Import Contacts from Device
+    document.getElementById('importContactsBtn')?.addEventListener('click', async () => {
+      if ('contacts' in navigator && 'Select' in window.ContactsManager) {
+        try {
+          const props = ['name', 'tel'];
+          const opts = { multiple: true };
+          const imported = await navigator.contacts.select(props, opts);
+          if (imported && imported.length > 0) {
+            for (const item of imported) {
+              const name = item.name ? item.name[0] : 'Kontak HP';
+              const tel = item.tel ? item.tel[0] : '';
+              await StorageManager.saveContact({
+                name,
+                avatar: '📱',
+                tier: 'friends',
+                whatsappNumber: tel,
+                instagramHandle: '',
+                attitudeGuide: TIER_CONFIG.friends.template
+              }, currentUser?.uid);
+            }
+            renderApp();
+          }
+        } catch (e) {
+          console.warn('Import error:', e);
+        }
+      }
+    });
+  }
+
+  // Initial Render
+  renderApp();
 });
