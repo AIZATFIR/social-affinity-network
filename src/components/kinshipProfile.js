@@ -1,6 +1,6 @@
 import { TIER_CONFIG } from '../types.js';
 
-export function renderKinshipProfileDrawer(contact, onClose, onEdit, onDelete) {
+export function renderKinshipProfileDrawer(contact) {
   if (!contact) return '';
 
   const tier = TIER_CONFIG[contact.tier] || TIER_CONFIG.friends;
@@ -8,99 +8,119 @@ export function renderKinshipProfileDrawer(contact, onClose, onEdit, onDelete) {
     ? `https://wa.me/${contact.whatsappNumber.replace(/[^0-9]/g, '')}` 
     : null;
   const igUrl = contact.instagramHandle 
-    ? `https://instagram.com/${contact.instagramHandle.replace('@', '')}` 
+    ? `https://instagram.com/${encodeURIComponent(contact.instagramHandle.replace(/^@/, '').trim())}` 
     : null;
 
   return `
     <div id="profileDrawerBackdrop" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end animate-fade-in">
-      <div class="w-full max-w-md bg-white dark:bg-slate-900 h-full overflow-y-auto shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 animate-slide-left">
+      <div class="w-full max-w-md bg-canvas-parchment dark:bg-slate-900 h-full overflow-y-auto product-shadow flex flex-col justify-between border-l border-slate-200 dark:border-slate-800 animate-slide-left">
         
-        <!-- Drawer Content Header -->
-        <div>
-          <div class="p-6 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Detail Kontak</span>
-            <button id="btnCloseDrawer" class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-              <span class="material-icons text-lg">close</span>
-            </button>
-          </div>
+        <!-- Drawer Header -->
+        <header class="w-full h-16 flex items-center justify-between px-6 sticky top-0 z-10 bg-canvas-parchment/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+          <button id="btnCloseDrawer" class="flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-slate-800 product-shadow text-slate-800 dark:text-slate-100 hover:opacity-80 transition-opacity">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+          </button>
+          <div class="text-base font-bold text-slate-900 dark:text-white">${escapeHtml(contact.name)}</div>
+          <button id="btnEditContact" class="flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-slate-800 product-shadow text-slate-800 dark:text-slate-100 hover:opacity-80 transition-opacity" title="Edit Contact">
+            <span class="material-symbols-outlined text-lg">edit</span>
+          </button>
+        </header>
 
-          <div class="p-6 space-y-6">
-            
-            <!-- Contact Avatar & Title Card -->
-            <div class="text-center space-y-3">
-              <div class="w-20 h-20 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 border-4 shadow-lg flex items-center justify-center text-4xl" style="border-color: ${tier.color}">
-                <span>${contact.avatar || '🍎'}</span>
-              </div>
-              <div>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">${escapeHtml(contact.name)}</h2>
-                <div class="inline-flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-sm" style="background-color: ${tier.color}">
-                  <span>${tier.icon}</span>
-                  <span>${tier.name}</span>
-                </div>
+        <div class="p-6 space-y-6 flex-1">
+          
+          <!-- Hero Section: Museum Gallery Style -->
+          <section class="flex flex-col items-center justify-center pt-2 pb-4 gap-3 text-center">
+            <div class="relative w-28 h-28 rounded-2xl overflow-hidden product-shadow border-4 border-white dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center text-5xl">
+              <span>${contact.avatar || '🍎'}</span>
+              <!-- Inner Orbit Indicator Badge -->
+              <div class="absolute bottom-2 right-2 backdrop-blur-md rounded-full px-2.5 py-0.5 flex items-center gap-1 border shadow-sm" style="background-color: ${tier.color}15; border-color: ${tier.color}30;">
+                <span class="w-2 h-2 rounded-full" style="background-color: ${tier.color}"></span>
+                <span class="text-[10px] font-bold" style="color: ${tier.color}">${tier.name.split('/')[0].trim()}</span>
               </div>
             </div>
 
-            <!-- Quick Action Links (WhatsApp / Instagram) -->
-            <div class="flex gap-3">
+            <div class="space-y-1">
+              <h1 class="text-2xl font-bold text-slate-900 dark:text-white">${escapeHtml(contact.name)}</h1>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Dunbar Circle: <span class="font-semibold" style="color: ${tier.color}">${tier.name}</span></p>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex gap-3 mt-2 w-full">
               ${waUrl ? `
-                <a href="${waUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm">
-                  <span>💬 WhatsApp</span>
+                <a href="${waUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                  <span class="material-symbols-outlined text-sm">chat_bubble</span>
+                  <span>WhatsApp</span>
                 </a>
               ` : ''}
               ${igUrl ? `
-                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm">
-                  <span>📸 Instagram</span>
+                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                  <span class="material-symbols-outlined text-sm">photo_camera</span>
+                  <span>Instagram</span>
                 </a>
               ` : ''}
             </div>
+          </section>
 
-            <!-- Attitude Guidelines Section -->
-            <div class="space-y-4 pt-2">
-              <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <span class="material-icons text-sm">psychology</span>
-                <span>Panduan Sikap & Interaksi</span>
-              </h3>
+          <!-- How to Treat Them (Quote Style Card) -->
+          <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+              <span class="material-symbols-outlined text-lg">auto_awesome</span>
+              <h2>How to Treat Them</h2>
+            </div>
+            <div class="border-l-4 pl-4 py-1 italic text-xs leading-relaxed text-slate-700 dark:text-slate-300 relative whitespace-pre-line" style="border-color: ${tier.color}">
+              ${escapeHtml(contact.attitudeGuide?.howToTreat || tier.template.howToTreat)}
+            </div>
+          </section>
 
-              <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
-                
-                <div>
-                  <div class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 mb-1">🔥 Cara Memperlakukan:</div>
-                  <div class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                    ${escapeHtml(contact.attitudeGuide?.howToTreat || tier.template.howToTreat)}
-                  </div>
-                </div>
+          <!-- Do's & Don'ts Card -->
+          <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+              <span class="material-symbols-outlined text-lg">checklist</span>
+              <h2>Do's & Don'ts</h2>
+            </div>
+            <div class="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
+              ${escapeHtml(contact.attitudeGuide?.doAndDonts || tier.template.doAndDonts)}
+            </div>
+          </section>
 
-                <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
-                  <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">✅ DO & ❌ DONT:</div>
-                  <div class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                    ${escapeHtml(contact.attitudeGuide?.doAndDonts || tier.template.doAndDonts)}
-                  </div>
-                </div>
+          <!-- Personal Notes & Reminders Card -->
+          <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-amber-500 font-bold text-sm">
+              <span class="material-symbols-outlined text-lg">bookmark</span>
+              <h2>Memory Notes & Reminders</h2>
+            </div>
+            <div class="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
+              ${escapeHtml(contact.attitudeGuide?.notes || tier.template.notes)}
+            </div>
+          </section>
 
-                <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
-                  <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1">📌 Catatan Memori & Ulang Tahun:</div>
-                  <div class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-                    ${escapeHtml(contact.attitudeGuide?.notes || tier.template.notes)}
-                  </div>
-                </div>
-
+          <!-- Memory Log Timeline Section -->
+          <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                <span class="material-symbols-outlined text-lg">history_edu</span>
+                <h2>Memory Log</h2>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Timeline</span>
+            </div>
+            <div class="flex flex-col gap-3 relative pl-4 border-l-2 border-slate-200 dark:border-slate-700 text-xs">
+              <div class="relative">
+                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
+                <p class="text-[10px] font-bold text-slate-400 mb-0.5">Added to Orbit</p>
+                <p class="text-slate-700 dark:text-slate-300">${new Date(contact.createdAt || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
               </div>
             </div>
+          </section>
 
-          </div>
         </div>
 
-        <!-- Drawer Action Footer -->
-        <div class="p-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex gap-3">
-          <button id="btnEditContact" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5">
-            <span class="material-icons text-base">edit</span>
-            <span>Edit Kontak</span>
+        <!-- Footer Actions -->
+        <footer class="p-6 bg-canvas-parchment/90 dark:bg-slate-900/90 border-t border-slate-200/80 dark:border-slate-800 flex gap-3">
+          <button id="btnDeleteContact" class="w-full py-3 px-4 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-300 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-base">delete</span>
+            <span>Hapus Kontak</span>
           </button>
-          <button id="btnDeleteContact" class="py-3 px-4 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-300 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-1">
-            <span class="material-icons text-base">delete</span>
-            <span>Hapus</span>
-          </button>
-        </div>
+        </footer>
 
       </div>
     </div>

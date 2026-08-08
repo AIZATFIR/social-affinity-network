@@ -41,47 +41,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderApp() {
     const contacts = StorageManager.getContacts();
-    const stats = StorageManager.getCapacityStats();
     const selectedContact = contacts.find(c => c.id === selectedContactId) || null;
 
     app.innerHTML = `
-      <div class="min-h-screen bg-parchment flex flex-col font-display text-slate-800 dark:text-slate-100 selection:bg-indigo-500 selection:text-white">
+      <div class="min-h-screen bg-canvas-parchment flex flex-col font-display text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white">
         
-        <!-- Sticky Top Header Navbar -->
-        <header class="sticky top-0 z-40 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 py-3">
+        <!-- Sticky Top Header Navbar (Apple Glass Panel) -->
+        <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 px-4 py-3 product-shadow">
           <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
             
             <div class="flex items-center gap-3 cursor-pointer" id="brandLogo">
-              <div class="w-10 h-10 rounded-2xl bg-indigo-600 shadow-md shadow-indigo-500/30 flex items-center justify-center text-white text-xl font-bold">
-                🌌
+              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 shadow-md shadow-indigo-500/20 flex items-center justify-center text-white text-xl font-bold">
+                👑
               </div>
               <div>
                 <h1 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Social Circle Manager</h1>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">Dunbar's Kinship Orbit System</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Dunbar's Intimacy Orbit System</p>
               </div>
             </div>
 
             <!-- Top Actions -->
             <div class="flex items-center gap-2">
               ${'contacts' in navigator && 'Select' in window.ContactsManager ? `
-                <button id="importContactsBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-2xl transition-all flex items-center gap-1 border border-indigo-200 dark:border-indigo-800">
-                  <span class="material-icons text-sm">contacts</span>
+                <button id="importContactsBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full transition-all flex items-center gap-1 border border-indigo-200 dark:border-indigo-800">
+                  <span class="material-symbols-outlined text-sm">contacts</span>
                   <span class="hidden sm:inline">Import HP</span>
                 </button>
               ` : ''}
 
-              <button id="addContactBtn" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1">
-                <span class="material-icons text-base">add</span>
-                <span class="hidden sm:inline">Tambah Teman</span>
+              <button id="addContactBtn" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-full transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1 product-shadow">
+                <span class="material-symbols-outlined text-sm">add</span>
+                <span class="hidden sm:inline">Add Contact</span>
               </button>
 
-              <button id="authBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-2xl transition-all flex items-center gap-1">
-                <span class="material-icons text-sm">${currentUser ? 'lock' : 'vpn_key'}</span>
+              <button id="authBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full transition-all flex items-center gap-1 border border-slate-200 dark:border-slate-700">
+                <span class="material-symbols-outlined text-sm">${currentUser ? 'lock' : 'vpn_key'}</span>
                 <span>${currentUser ? 'Logout' : 'Login'}</span>
               </button>
 
-              <button id="themeToggleBtn" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 transition-all">
-                <span class="material-icons text-sm">dark_mode</span>
+              <button id="themeToggleBtn" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700">
+                <span class="material-symbols-outlined text-sm">dark_mode</span>
               </button>
             </div>
 
@@ -93,28 +92,35 @@ document.addEventListener('DOMContentLoaded', () => {
           ${renderActiveView(contacts)}
         </main>
 
-        <!-- Fixed Bottom Navigation Bar -->
-        <nav class="fixed bottom-0 inset-x-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 py-2.5 px-6 z-40">
-          <div class="max-w-md mx-auto flex justify-around items-center">
+        <!-- Fixed Bottom Navigation Bar (Stitch Floating Style) -->
+        <nav class="fixed bottom-0 inset-x-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 py-3 px-6 z-40 product-shadow">
+          <div class="max-w-md mx-auto flex justify-between items-center relative">
             
             <button data-tab="orbit" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'orbit' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
-              <span class="material-icons text-xl">blur_on</span>
-              <span class="text-[10px] uppercase tracking-wider">Orbit</span>
-            </button>
-
-            <button data-tab="fullscreen" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'fullscreen' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
-              <span class="material-icons text-xl">fullscreen</span>
-              <span class="text-[10px] uppercase tracking-wider">Canvas</span>
+              <span class="material-symbols-outlined text-xl">home</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest">Orbit</span>
             </button>
 
             <button data-tab="circles" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'circles' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
-              <span class="material-icons text-xl">groups</span>
-              <span class="text-[10px] uppercase tracking-wider">Circles</span>
+              <span class="material-symbols-outlined text-xl">groups</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest">Circles</span>
+            </button>
+
+            <!-- Floating Center Add Contact Action Button -->
+            <div class="relative -top-6">
+              <button id="floatingAddBtn" class="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl shadow-indigo-500/30 flex items-center justify-center border-4 border-canvas-parchment dark:border-slate-900 hover:scale-105 transition-transform" title="Add Contact">
+                <span class="material-symbols-outlined text-3xl">add</span>
+              </button>
+            </div>
+
+            <button data-tab="fullscreen" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'fullscreen' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
+              <span class="material-symbols-outlined text-xl">fullscreen</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest">Canvas</span>
             </button>
 
             <button data-tab="insights" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'insights' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
-              <span class="material-icons text-xl">analytics</span>
-              <span class="text-[10px] uppercase tracking-wider">Stats</span>
+              <span class="material-symbols-outlined text-xl">insights</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest">Stats</span>
             </button>
 
           </div>
@@ -193,15 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
-        const container = document.querySelector('.orbit-container');
-        if (container) {
-          const contacts = StorageManager.getContacts();
-          const lovers = contacts.filter(c => c.tier === 'lovers');
-          const closeFriends = contacts.filter(c => c.tier === 'close_friends');
-          const family = contacts.filter(c => c.tier === 'family');
-          const friends = contacts.filter(c => c.tier === 'friends');
-          const acquaintances = contacts.filter(c => c.tier === 'acquaintances');
-        }
       });
     }
 
@@ -252,6 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
       isModalOpen = true;
       renderApp();
     });
+    document.getElementById('floatingAddBtn')?.addEventListener('click', () => {
+      editingContact = null;
+      isModalOpen = true;
+      renderApp();
+    });
     document.getElementById('btnQuickAdd')?.addEventListener('click', () => {
       editingContact = null;
       isModalOpen = true;
@@ -274,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const emoji = e.currentTarget.getAttribute('data-avatar');
         document.querySelectorAll('.avatar-preset-btn').forEach(b => {
           b.classList.remove('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110');
-          b.classList.add('border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-800');
+          b.classList.add('border-slate-200', 'dark:border-slate-700', 'bg-white', 'dark:bg-slate-800');
         });
         e.currentTarget.classList.add('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110');
         const input = document.getElementById('selectedAvatarInput');

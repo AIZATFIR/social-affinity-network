@@ -1,6 +1,6 @@
 import { TIER_CONFIG } from '../types.js';
 
-export function renderFullscreenOrbit(contacts, onSelectContact, onClose) {
+export function renderFullscreenOrbit(contacts) {
   const lovers = contacts.filter(c => c.tier === 'lovers');
   const closeFriends = contacts.filter(c => c.tier === 'close_friends');
   const family = contacts.filter(c => c.tier === 'family');
@@ -14,19 +14,19 @@ export function renderFullscreenOrbit(contacts, onSelectContact, onClose) {
       <header class="px-6 py-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
         <div class="flex items-center gap-3">
           <button id="btnCloseFullscreen" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition-colors">
-            <span class="material-icons">arrow_back</span>
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
           </button>
           <div>
             <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
               <span>🔭 Immersive Canvas Orbit</span>
             </h1>
-            <p class="text-xs text-slate-400">Tampilan Visual Lingkaran Sosial Penuh</p>
+            <p class="text-xs text-slate-400">Fullscreen Visual Dunbar Social Rings</p>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="text-xs text-indigo-400 bg-indigo-950 px-3 py-1 rounded-full border border-indigo-800">
-            Total: ${contacts.length} Kontak
+          <span class="text-xs font-bold text-indigo-400 bg-indigo-950 px-3 py-1.5 rounded-full border border-indigo-800">
+            Total: ${contacts.length} Contacts
           </span>
         </div>
       </header>
@@ -34,20 +34,20 @@ export function renderFullscreenOrbit(contacts, onSelectContact, onClose) {
       <!-- Main Canvas Area -->
       <main class="flex-1 relative flex items-center justify-center bg-radial-dark p-4 overflow-hidden">
         
-        <!-- Background Ambient Particles -->
+        <!-- Background Ambient Grid Particles -->
         <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:32px_32px]"></div>
 
-        <div class="orbit-container w-full max-w-[600px] aspect-square relative flex items-center justify-center">
+        <div class="orbit-container w-full max-w-[560px] aspect-square relative flex items-center justify-center">
           
           <!-- Concentric Orbit Rings -->
           <div class="ring w-full h-full border-slate-700/60 bg-slate-800/10"></div>
-          <div class="ring w-[75%] h-[75%] border-indigo-500/30 bg-indigo-950/20"></div>
+          <div class="ring w-[75%] h-[75%] border-emerald-500/30 bg-emerald-950/20"></div>
           <div class="ring w-[50%] h-[50%] border-amber-500/30 bg-amber-950/20"></div>
-          <div class="ring w-[28%] h-[28%] border-rose-500/40 bg-rose-950/30"></div>
+          <div class="ring w-[26%] h-[26%] border-rose-500/40 bg-rose-950/30"></div>
 
-          <!-- Center Node -->
-          <div class="relative z-10 w-16 h-16 rounded-full border-4 border-indigo-400 bg-indigo-600 shadow-2xl flex items-center justify-center text-3xl animate-pulse">
-            🌌
+          <!-- Center Node: YOU -->
+          <div class="relative z-10 w-16 h-16 rounded-full border-4 border-amber-400 bg-gradient-to-tr from-amber-400 to-yellow-500 shadow-2xl flex items-center justify-center text-3xl animate-pulse" style="box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);">
+            👑
           </div>
 
           <!-- Floating Orbit Avatars -->
@@ -56,12 +56,12 @@ export function renderFullscreenOrbit(contacts, onSelectContact, onClose) {
         </div>
 
         <!-- Tier Legend Overlay -->
-        <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800 space-y-2 text-xs">
-          <div class="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Panduan Warna Orbit</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FFB5C5]"></span> Lovers / Intimate (28%)</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FFD97D]"></span> Close Friends (50%)</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#A0D6B4]"></span> Family (75%)</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#9DC6E0]"></span> Friends & Outer (100%)</div>
+        <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800 space-y-2 text-xs product-shadow">
+          <div class="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Orbit Ring Legend</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FF2D55]"></span> Lovers / Intimate (26%)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FFCC00]"></span> Close Friends (50%)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span> Family (75%)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#5856D6]"></span> Friends & Outer Network (100%)</div>
         </div>
 
       </main>
@@ -91,7 +91,7 @@ function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends
           style="left: ${pos.left}; top: ${pos.top}; animation-delay: ${delay}s;"
           title="${escapeHtml(c.name)}"
         >
-          <div class="w-11 h-11 rounded-full bg-slate-900 border-2 shadow-xl flex items-center justify-center text-2xl overflow-hidden hover:ring-4 ring-indigo-500/50" style="border-color: ${TIER_CONFIG[c.tier]?.color || '#6366f1'}">
+          <div class="w-11 h-11 rounded-full bg-slate-900 border-2 product-shadow flex items-center justify-center text-2xl overflow-hidden hover:ring-4 ring-indigo-500/50" style="border-color: ${TIER_CONFIG[c.tier]?.color || '#0066cc'}">
             <span>${c.avatar || '🍎'}</span>
           </div>
         </div>
@@ -100,7 +100,7 @@ function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends
   };
 
   return `
-    ${renderGroup(lovers, 28)}
+    ${renderGroup(lovers, 26)}
     ${renderGroup(closeFriends, 50)}
     ${renderGroup(family, 75)}
     ${renderGroup([...friends, ...acquaintances], 98)}

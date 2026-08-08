@@ -1,121 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* --- Base Styles & Theme Variables --- */
+/* --- Apple & Stitch Design Tokens --- */
 :root {
-  --bg-light: #FDFBF7;
-  --bg-dark: #121212;
-  --primary: #6366f1;
-  --orbit-intimate: #FFB5C5;
-  --orbit-close: #FFD97D;
-  --orbit-family: #A0D6B4;
-  --orbit-friends: #9DC6E0;
-  --orbit-acquaintances: #64748b;
-  
-  /* Legacy Apple Dark & Vibrant HSL Accent System */
-  --bg-deep: #060913;
-  --bg-canvas: radial-gradient(circle at 50% 40%, #10192d 0%, #060913 100%);
-  --panel-glass: rgba(18, 26, 44, 0.72);
-  --panel-glass-border: rgba(255, 255, 255, 0.12);
-  --panel-glass-shine: rgba(255, 255, 255, 0.05);
+  --canvas-parchment: #F5F5F7;
+  --surface-pearl: #FAFAFC;
+  --surface-white: #FFFFFF;
+  --ink-primary: #1D1D1F;
+  --ink-muted: #7A7A7A;
+  --action-blue: #0066cc;
+  --action-blue-hover: #0071e3;
+  --action-blue-dark: #2997ff;
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-
-  --tier-lovers: #FFB5C5;
-  --tier-close: #FFD97D;
-  --tier-family: #A0D6B4;
-  --tier-friends: #9DC6E0;
+  --tier-lovers: #FF2D55;
+  --tier-close: #FFCC00;
+  --tier-family: #34C759;
+  --tier-friends: #5856D6;
   --tier-acquaintances: #64748b;
 
-  --radius-xl: 24px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-pill: 9999px;
+  --orbit-intimate: rgba(255, 45, 85, 0.15);
+  --orbit-close: rgba(255, 204, 0, 0.15);
+  --orbit-family: rgba(52, 199, 89, 0.15);
+  --orbit-friends: rgba(88, 86, 214, 0.15);
+
+  --shadow-product: 0px 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-apple-lg: 0 20px 50px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+  --shadow-glow-gold: 0 0 25px rgba(255, 215, 0, 0.5);
 
   --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-apple-lg: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.2);
-  --shadow-apple-glow: 0 0 25px rgba(0, 240, 255, 0.25);
+  --radius-pill: 9999px;
+  --radius-lg: 18px;
+  --radius-md: 12px;
 }
 
-/* --- Parchment Background Texture Utility --- */
-.bg-parchment {
-  background-color: #FDFBF7;
-  background-image: radial-gradient(#e2e8f0 0.75px, transparent 0.75px), radial-gradient(#e2e8f0 0.75px, #FDFBF7 0.75px);
-  background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
+.dark {
+  --canvas-parchment: #0f172a;
+  --surface-pearl: #1e293b;
+  --surface-white: #0f172a;
+  --ink-primary: #f8fafc;
+  --ink-muted: #94a3b8;
+
+  --shadow-product: 0px 4px 25px rgba(0, 0, 0, 0.4);
+  --shadow-apple-lg: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-.dark .bg-parchment {
-  background-color: #121212;
-  background-image: radial-gradient(#262626 0.75px, transparent 0.75px), radial-gradient(#262626 0.75px, #121212 0.75px);
-}
-
-.parchment-texture {
-  background-color: #FDFBF7;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0);
-  background-size: 24px 24px;
-}
-
-.dark .parchment-texture {
-  background-color: #121212;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
-  background-size: 24px 24px;
-}
-
-/* --- Orbit Container Aspect Ratio & Ring Styles --- */
-.orbit-container {
-  position: relative;
-  width: 100%;
-  max-width: 680px;
-  aspect-ratio: 1 / 1;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.orbit-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border: 1.5px dashed rgba(148, 163, 184, 0.4);
-  border-radius: 50%;
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-.orbit-ring-dashed {
-  border-style: dashed;
-}
-
-.dark .orbit-ring {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* --- Floating Avatar Animations --- */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-  animation: float 3.5s ease-in-out 0.5s infinite;
-}
-
-.animate-float-slow {
-  animation: float 4s ease-in-out 1s infinite;
-}
-
+/* --- Base Body & Typography --- */
 * {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
@@ -124,526 +53,140 @@
 
 body {
   margin: 0;
-  background: var(--bg-deep);
-  color: var(--text-primary);
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow: hidden;
-  height: 100vh;
+  background-color: var(--canvas-parchment);
+  color: var(--ink-primary);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
   letter-spacing: -0.015em;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
-/* --- Apple Floating Glass Navbar --- */
-.navbar {
-  position: absolute;
-  top: 16px;
-  left: 20px;
-  right: 20px;
-  height: 64px;
+/* --- Parchment Dot Texture --- */
+.bg-parchment {
+  background-color: var(--canvas-parchment);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .bg-parchment {
+  background-color: #0f172a;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.product-shadow {
+  box-shadow: var(--shadow-product);
+}
+
+/* --- Floating Orbit Ring Canvas --- */
+.orbit-container {
+  aspect-ratio: 1 / 1;
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  background: var(--panel-glass);
+  justify-content: center;
+}
+
+.ring {
+  border: 1.5px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.4s var(--ease-apple);
+}
+
+.dark .ring {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Floating Avatar Animation --- */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* --- Glassmorphism Headers & Navbars --- */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--panel-glass-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-apple-lg);
-  z-index: 100;
-  transition: all 0.3s var(--ease-apple);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-badge {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(112, 0, 255, 0.3));
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-}
-
-.logo h1 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0;
-  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.02em;
-}
-
-/* --- Capacity Pill Bar --- */
-.capacity-gauge {
-  display: flex;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.gauge-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: background 0.2s ease;
-}
-
-.gauge-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.gauge-item .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* --- Canvas Container --- */
-.main-container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  position: relative;
-}
-
-.cy-container {
-  flex: 1;
-  height: 100%;
-  width: 100%;
-  background: var(--bg-canvas);
-}
-
-/* --- Apple Floating Inspector Drawer --- */
-.drawer {
-  position: absolute;
-  top: 92px;
-  right: 20px;
-  bottom: 20px;
-  width: 400px;
-  background: var(--panel-glass);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid var(--panel-glass-border);
-  border-radius: var(--radius-xl);
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-apple-lg);
-  z-index: 90;
-  transition: transform 0.4s var(--ease-apple), opacity 0.3s ease;
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.drawer.hidden {
-  transform: translateX(440px);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.drawer-header {
-  padding: 20px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.drawer-header h2 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.drawer-content {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.profile-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.avatar-large {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #00f0ff 0%, #7000ff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #fff;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
-  border: 3px solid rgba(255, 255, 255, 0.8);
-}
-
-.badge {
-  padding: 4px 14px;
+/* --- Apple Action Buttons --- */
+.btn-apple-pill {
+  padding: 10px 20px;
   border-radius: var(--radius-pill);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.quick-links {
-  display: flex;
-  gap: 12px;
-}
-
-.guide-section h3 {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 8px 0;
-  color: var(--text-tertiary);
-}
-
-.guide-box {
-  background: rgba(255, 255, 255, 0.03);
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0;
-  color: #e2e8f0;
-}
-
-.drawer-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: auto;
-}
-
-/* --- Buttons --- */
-.btn {
-  padding: 10px 18px;
-  border-radius: var(--radius-md);
-  border: none;
   font-weight: 600;
   font-size: 0.85rem;
-  cursor: pointer;
   transition: all 0.2s var(--ease-apple);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-}
-
-.btn:active {
-  transform: scale(0.96);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #00f0ff 0%, #7000ff 100%);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
-}
-
-.btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(0, 240, 255, 0.45);
-  filter: brightness(1.1);
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.btn-danger {
-  background: rgba(255, 42, 109, 0.2);
-  color: #ff2a6d;
-  border: 1px solid rgba(255, 42, 109, 0.4);
-}
-
-.btn-danger:hover {
-  background: rgba(255, 42, 109, 0.35);
-}
-
-.btn-wa {
-  flex: 1;
-  background: rgba(37, 211, 102, 0.15);
-  color: #25d366;
-  border: 1px solid rgba(37, 211, 102, 0.35);
-  text-decoration: none;
-  padding: 10px;
-  border-radius: var(--radius-md);
-  font-weight: 700;
-  font-size: 0.85rem;
-  text-align: center;
-  transition: all 0.2s var(--ease-apple);
-}
-
-.btn-wa:hover {
-  background: rgba(37, 211, 102, 0.3);
-  transform: translateY(-1px);
-}
-
-.btn-ig {
-  flex: 1;
-  background: rgba(225, 48, 108, 0.15);
-  color: #e1306c;
-  border: 1px solid rgba(225, 48, 108, 0.35);
-  text-decoration: none;
-  padding: 10px;
-  border-radius: var(--radius-md);
-  font-weight: 700;
-  font-size: 0.85rem;
-  text-align: center;
-  transition: all 0.2s var(--ease-apple);
-}
-
-.btn-ig:hover {
-  background: rgba(225, 48, 108, 0.3);
-  transform: translateY(-1px);
-}
-
-.btn-icon {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-icon:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* --- Apple Modal Backdrop & Sheet --- */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 1;
-  transition: opacity 0.3s var(--ease-apple);
-}
-
-.modal.hidden {
-  opacity: 0;
-  pointer-events: none;
-  display: none !important;
-}
-
-.modal-content {
-  background: var(--panel-glass);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid var(--panel-glass-border);
-  padding: 28px;
-  border-radius: var(--radius-xl);
-  width: 500px;
-  max-width: 92vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-apple-lg);
-  animation: modalPop 0.35s var(--ease-apple);
-}
-
-@keyframes modalPop {
-  0% { transform: scale(0.92) translateY(20px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-.modal-content h2 {
-  margin: 0 0 20px 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.02em;
-}
-
-.form-group {
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
   gap: 6px;
-}
-
-.form-group label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.form-group input, .form-group select, .form-group textarea {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  font-family: inherit;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-}
-
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-  outline: none;
-  border-color: #00f0ff;
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.25);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* --- Avatar Picker Grid --- */
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 10px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.avatar-opt {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  font-size: 1.3rem;
-  padding: 6px 0;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s var(--ease-apple);
+  border: none;
 }
 
-.avatar-opt:hover {
-  background: rgba(0, 240, 255, 0.2);
-  transform: scale(1.15);
+.btn-apple-pill:active {
+  transform: scale(0.95);
 }
 
-.avatar-opt.selected {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(112, 0, 255, 0.4));
-  border-color: #00f0ff;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-  transform: scale(1.15);
+.btn-apple-primary {
+  background-color: var(--action-blue);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 102, 204, 0.25);
 }
 
-/* --- Task List & Priority Styling --- */
-.task-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.btn-apple-primary:hover {
+  background-color: var(--action-blue-hover);
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.35);
 }
 
-.task-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.86rem;
-  line-height: 1.45;
-  color: #e2e8f0;
+/* Hide scrollbar for clean UI */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.task-bullet {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-top: 5px;
-  flex-shrink: 0;
-  background: #00f0ff;
+/* --- Modal & Drawer Animations --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.priority-high {
-  border-left: 3.5px solid #ff2a6d;
-  background: rgba(255, 42, 109, 0.08);
-}
-.priority-high .task-bullet { background: #ff2a6d; box-shadow: 0 0 6px #ff2a6d; }
-
-.priority-medium {
-  border-left: 3.5px solid #f59e0b;
-  background: rgba(245, 158, 11, 0.08);
-}
-.priority-medium .task-bullet { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
-
-.task-do {
-  border-left: 3.5px solid #10b981;
-  background: rgba(16, 185, 129, 0.08);
-}
-.task-do .task-bullet { background: #10b981; box-shadow: 0 0 6px #10b981; }
-
-.task-dont {
-  border-left: 3.5px solid #ef4444;
-  background: rgba(239, 68, 68, 0.08);
-}
-.task-dont .task-bullet { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-
-.empty-guide {
-  font-size: 0.85rem;
-  color: var(--text-tertiary);
-  font-style: italic;
+@keyframes slideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.25s var(--ease-apple) forwards;
+}
 
+.animate-slide-left {
+  animation: slideLeft 0.35s var(--ease-apple) forwards;
+}
