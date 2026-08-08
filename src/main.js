@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
             
             <div class="flex items-center gap-3 cursor-pointer" id="brandLogo">
-              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 shadow-md shadow-indigo-500/20 flex items-center justify-center text-white text-xl font-bold">
-                👑
+              <div class="w-10 h-10 rounded-2xl bg-slate-900 text-indigo-400 shadow-md flex items-center justify-center font-bold border border-slate-800">
+                <span class="material-symbols-outlined text-2xl">blur_on</span>
               </div>
               <div>
                 <h1 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Social Circle Manager</h1>

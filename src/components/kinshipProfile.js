@@ -4,12 +4,12 @@ export function renderKinshipProfileDrawer(contact) {
   if (!contact) return '';
 
   const tier = TIER_CONFIG[contact.tier] || TIER_CONFIG.friends;
+  const cleanHandle = encodeURIComponent(contact.instagramHandle ? contact.instagramHandle.replace(/^@/, '').trim() : '');
   const waUrl = contact.whatsappNumber 
     ? `https://wa.me/${contact.whatsappNumber.replace(/[^0-9]/g, '')}` 
     : null;
-  const igUrl = contact.instagramHandle 
-    ? `https://instagram.com/${encodeURIComponent(contact.instagramHandle.replace(/^@/, '').trim())}` 
-    : null;
+  const igUrl = contact.instagramHandle ? `https://instagram.com/${cleanHandle}` : null;
+  const initials = getContactInitials(contact);
 
   return `
     <div id="profileDrawerBackdrop" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end animate-fade-in">
@@ -30,8 +30,9 @@ export function renderKinshipProfileDrawer(contact) {
           
           <!-- Hero Section: Museum Gallery Style -->
           <section class="flex flex-col items-center justify-center pt-2 pb-4 gap-3 text-center">
-            <div class="relative w-28 h-28 rounded-2xl overflow-hidden product-shadow border-4 border-white dark:border-slate-800 bg-white dark:bg-slate-800 flex items-center justify-center text-5xl">
-              <span>${contact.avatar || '🍎'}</span>
+            <div class="relative w-28 h-28 rounded-2xl overflow-hidden product-shadow border-4 border-white dark:border-slate-800 bg-gradient-to-tr from-slate-900 to-slate-800 text-white flex items-center justify-center text-3xl font-bold">
+              ${contact.avatar && isSymbol(contact.avatar) ? `<span class="material-symbols-outlined text-4xl" style="color: ${tier.color}">${contact.avatar}</span>` : `<span>${initials}</span>`}
+              
               <!-- Inner Orbit Indicator Badge -->
               <div class="absolute bottom-2 right-2 backdrop-blur-md rounded-full px-2.5 py-0.5 flex items-center gap-1 border shadow-sm" style="background-color: ${tier.color}15; border-color: ${tier.color}30;">
                 <span class="w-2 h-2 rounded-full" style="background-color: ${tier.color}"></span>
@@ -47,13 +48,13 @@ export function renderKinshipProfileDrawer(contact) {
             <!-- Quick Action Buttons -->
             <div class="flex gap-3 mt-2 w-full">
               ${waUrl ? `
-                <a href="${waUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                <a href="${waUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
                   <span class="material-symbols-outlined text-sm">chat_bubble</span>
                   <span>WhatsApp</span>
                 </a>
               ` : ''}
               ${igUrl ? `
-                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
                   <span class="material-symbols-outlined text-sm">photo_camera</span>
                   <span>Instagram</span>
                 </a>
@@ -67,7 +68,7 @@ export function renderKinshipProfileDrawer(contact) {
               <span class="material-symbols-outlined text-lg">auto_awesome</span>
               <h2>How to Treat Them</h2>
             </div>
-            <div class="border-l-4 pl-4 py-1 italic text-xs leading-relaxed text-slate-700 dark:text-slate-300 relative whitespace-pre-line" style="border-color: ${tier.color}">
+            <div class="border-l-4 pl-4 py-1 text-xs leading-relaxed text-slate-700 dark:text-slate-300 relative whitespace-pre-line" style="border-color: ${tier.color}">
               ${escapeHtml(contact.attitudeGuide?.howToTreat || tier.template.howToTreat)}
             </div>
           </section>
@@ -125,6 +126,19 @@ export function renderKinshipProfileDrawer(contact) {
       </div>
     </div>
   `;
+}
+
+function getContactInitials(c) {
+  if (c.initials) return c.initials;
+  const parts = (c.name || '').trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return (c.name || 'C').substring(0, 2).toUpperCase();
+}
+
+function isSymbol(str) {
+  return typeof str === 'string' && /^[a-z0-9_]+$/.test(str);
 }
 
 function escapeHtml(str) {

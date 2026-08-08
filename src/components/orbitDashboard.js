@@ -51,14 +51,14 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
 
         <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <button data-filter="all" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${selectedTierFilter === 'all' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}">
-            🌟 All Circles (${contacts.length})
+            All Circles (${contacts.length})
           </button>
           ${Object.entries(TIER_CONFIG).map(([key, config]) => {
             const count = contacts.filter(c => c.tier === key).length;
             const isActive = selectedTierFilter === key;
             return `
               <button data-filter="${key}" class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}">
-                <span>${config.icon}</span>
+                <span class="material-symbols-outlined text-sm">${config.icon}</span>
                 <span>${config.name.split('/')[0].trim()}</span>
                 <span class="opacity-75">(${count})</span>
               </button>
@@ -84,8 +84,8 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
           <div class="ring w-[26%] h-[26%] bg-rose-500/25 dark:bg-rose-500/20"></div>
 
           <!-- Center Node: YOU -->
-          <div class="relative z-10 w-16 h-16 rounded-full border-4 border-white dark:border-slate-800 shadow-xl bg-gradient-to-tr from-amber-400 to-yellow-500 flex items-center justify-center text-white text-3xl font-bold cursor-pointer hover:scale-105 transition-transform" style="box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);" title="Center Orbit (YOU)">
-            👑
+          <div class="relative z-10 w-14 h-14 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-xl flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-105 transition-transform" style="box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);" title="Center Orbit (YOU)">
+            <span class="material-symbols-outlined text-2xl">account_circle</span>
           </div>
 
           <!-- Floating Orbit Avatars -->
@@ -145,7 +145,7 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
                 <div class="flex-1">
                   <div class="flex justify-between text-xs font-semibold mb-1">
                     <span class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <span>${config.icon}</span> ${config.name}
+                      <span class="material-symbols-outlined text-sm">${config.icon}</span> ${config.name}
                     </span>
                     <span class="text-slate-500 dark:text-slate-400">${count} / ${config.recMax}</span>
                   </div>
@@ -184,6 +184,7 @@ function renderOrbitAvatars(filteredContacts, lovers, closeFriends, family, frie
       if (!filteredContacts.some(c => c.id === contact.id)) return '';
       const pos = getOrbitPosition(idx, groupList.length, ringPercentage);
       const delay = (idx * 0.4) % 3;
+      const initials = getContactInitials(contact);
 
       return `
         <div 
@@ -193,8 +194,8 @@ function renderOrbitAvatars(filteredContacts, lovers, closeFriends, family, frie
           title="${escapeHtml(contact.name)} (${TIER_CONFIG[contact.tier]?.name || ''})"
         >
           <div class="relative group">
-            <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white dark:bg-slate-800 border-2 product-shadow flex items-center justify-center text-lg md:text-xl overflow-hidden" style="border-color: ${TIER_CONFIG[contact.tier]?.color || '#0066cc'}">
-              <span>${contact.avatar || '🍎'}</span>
+            <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white dark:bg-slate-800 border-2 product-shadow flex items-center justify-center font-bold text-xs md:text-sm text-slate-800 dark:text-slate-100 overflow-hidden" style="border-color: ${TIER_CONFIG[contact.tier]?.color || '#0066cc'}">
+              ${contact.avatar && isSymbol(contact.avatar) ? `<span class="material-symbols-outlined text-base">${contact.avatar}</span>` : `<span>${initials}</span>`}
             </div>
             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap shadow-lg z-40 pointer-events-none">
               ${escapeHtml(contact.name)}
@@ -211,6 +212,19 @@ function renderOrbitAvatars(filteredContacts, lovers, closeFriends, family, frie
     ${renderTierAvatars(family, 75)}
     ${renderTierAvatars([...friends, ...acquaintances], 98)}
   `;
+}
+
+function getContactInitials(c) {
+  if (c.initials) return c.initials;
+  const parts = (c.name || '').trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return (c.name || 'C').substring(0, 2).toUpperCase();
+}
+
+function isSymbol(str) {
+  return typeof str === 'string' && /^[a-z0-9_]+$/.test(str);
 }
 
 function escapeHtml(str) {

@@ -21,7 +21,8 @@ export function renderNetworkInsights(contacts) {
       <!-- Page Header -->
       <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow">
         <h1 class="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-          <span>📊 Analitik Kesehatan Hubungan</span>
+          <span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400">insights</span>
+          <span>Analitik Kesehatan Hubungan</span>
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Evaluasi keseimbangan jaringan sosial dan pola interaksi menurut Hukum Dunbar
@@ -78,7 +79,7 @@ export function renderNetworkInsights(contacts) {
               <div class="space-y-1">
                 <div class="flex justify-between text-xs font-semibold">
                   <span class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <span>${config.icon}</span> ${config.name}
+                    <span class="material-symbols-outlined text-sm">${config.icon}</span> ${config.name}
                   </span>
                   <span class="text-slate-500 dark:text-slate-400">${count} Kontak (${percent}%)</span>
                 </div>
@@ -103,20 +104,25 @@ export function renderNetworkInsights(contacts) {
 
         ${priorityContacts.length > 0 ? `
           <div class="divide-y divide-slate-100 dark:divide-slate-800/80">
-            ${priorityContacts.map(c => `
-              <div class="py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <span class="text-2xl">${c.avatar || '🍎'}</span>
-                  <div>
-                    <div class="font-bold text-xs text-slate-900 dark:text-slate-100">${escapeHtml(c.name)}</div>
-                    <div class="text-[10px] text-slate-400">${TIER_CONFIG[c.tier]?.name || ''}</div>
+            ${priorityContacts.map(c => {
+              const initials = getContactInitials(c);
+              return `
+                <div class="py-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border flex items-center justify-center font-bold text-xs text-slate-800 dark:text-slate-100" style="border-color: ${TIER_CONFIG[c.tier]?.color || '#0066cc'}">
+                      ${c.avatar && isSymbol(c.avatar) ? `<span class="material-symbols-outlined text-sm">${c.avatar}</span>` : `<span>${initials}</span>`}
+                    </div>
+                    <div>
+                      <div class="font-bold text-xs text-slate-900 dark:text-slate-100">${escapeHtml(c.name)}</div>
+                      <div class="text-[10px] text-slate-400">${TIER_CONFIG[c.tier]?.name || ''}</div>
+                    </div>
                   </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-200 dark:border-indigo-800">
+                    Prioritas Utama
+                  </span>
                 </div>
-                <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-200 dark:border-indigo-800">
-                  Prioritas Utama
-                </span>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         ` : `
           <div class="text-xs text-slate-400 italic py-2">Belum ada kontak di kategori prioritas utama.</div>
@@ -125,6 +131,19 @@ export function renderNetworkInsights(contacts) {
 
     </div>
   `;
+}
+
+function getContactInitials(c) {
+  if (c.initials) return c.initials;
+  const parts = (c.name || '').trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return (c.name || 'C').substring(0, 2).toUpperCase();
+}
+
+function isSymbol(str) {
+  return typeof str === 'string' && /^[a-z0-9_]+$/.test(str);
 }
 
 function escapeHtml(str) {

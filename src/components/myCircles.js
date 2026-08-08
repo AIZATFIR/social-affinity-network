@@ -8,7 +8,8 @@ export function renderMyCircles(contacts) {
       <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow flex justify-between items-center">
         <div>
           <h1 class="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>⭕ Lingkaran Sosial (Dunbar Tiers)</span>
+            <span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400">blur_on</span>
+            <span>Lingkaran Sosial (Dunbar Tiers)</span>
           </h1>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Manajemen batas kapasitas hubungan emosional & sosial yang sehat
@@ -35,7 +36,7 @@ export function renderMyCircles(contacts) {
               <div class="flex justify-between items-start">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-inner" style="background-color: ${config.color}20; color: ${config.color}">
-                    <span>${config.icon}</span>
+                    <span class="material-symbols-outlined text-xl">${config.icon}</span>
                   </div>
                   <div>
                     <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
@@ -49,7 +50,11 @@ export function renderMyCircles(contacts) {
                   <span class="text-xs font-bold px-3 py-1 rounded-full ${isOverCapacity ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">
                     ${members.length} / ${config.recMax}
                   </span>
-                  ${isOverCapacity ? '<div class="text-[10px] text-rose-500 font-bold mt-1">⚠️ Melebihi Rekomendasi</div>' : ''}
+                  ${isOverCapacity ? `
+                    <div class="text-[10px] text-rose-500 font-bold mt-1 flex items-center justify-end gap-0.5">
+                      <span class="material-symbols-outlined text-xs">warning</span> Melebihi Rekomendasi
+                    </div>
+                  ` : ''}
                 </div>
               </div>
 
@@ -65,15 +70,18 @@ export function renderMyCircles(contacts) {
                 <div class="pt-2">
                   <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Anggota Lingkaran:</div>
                   <div class="flex flex-wrap gap-2">
-                    ${members.map(c => `
-                      <button 
-                        data-contact-id="${c.id}"
-                        class="contact-chip-item px-3 py-1.5 bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl text-xs font-semibold text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5 transition-all product-shadow"
-                      >
-                        <span>${c.avatar || '🍎'}</span>
-                        <span>${escapeHtml(c.name)}</span>
-                      </button>
-                    `).join('')}
+                    ${members.map(c => {
+                      const initials = getContactInitials(c);
+                      return `
+                        <button 
+                          data-contact-id="${c.id}"
+                          class="contact-chip-item px-3 py-1.5 bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl text-xs font-semibold text-slate-800 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700/50 flex items-center gap-1.5 transition-all product-shadow"
+                        >
+                          ${c.avatar && isSymbol(c.avatar) ? `<span class="material-symbols-outlined text-sm">${c.avatar}</span>` : `<span class="text-[10px] font-bold px-1 rounded bg-slate-200 dark:bg-slate-700">${initials}</span>`}
+                          <span>${escapeHtml(c.name)}</span>
+                        </button>
+                      `;
+                    }).join('')}
                   </div>
                 </div>
               ` : `
@@ -96,6 +104,19 @@ export function renderMyCircles(contacts) {
 
     </div>
   `;
+}
+
+function getContactInitials(c) {
+  if (c.initials) return c.initials;
+  const parts = (c.name || '').trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return (c.name || 'C').substring(0, 2).toUpperCase();
+}
+
+function isSymbol(str) {
+  return typeof str === 'string' && /^[a-z0-9_]+$/.test(str);
 }
 
 function escapeHtml(str) {

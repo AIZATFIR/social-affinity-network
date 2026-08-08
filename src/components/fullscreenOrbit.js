@@ -18,7 +18,8 @@ export function renderFullscreenOrbit(contacts) {
           </button>
           <div>
             <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <span>🔭 Immersive Canvas Orbit</span>
+              <span class="material-symbols-outlined text-indigo-400">blur_on</span>
+              <span>Immersive Canvas Orbit</span>
             </h1>
             <p class="text-xs text-slate-400">Fullscreen Visual Dunbar Social Rings</p>
           </div>
@@ -46,8 +47,8 @@ export function renderFullscreenOrbit(contacts) {
           <div class="ring w-[26%] h-[26%] border-rose-500/40 bg-rose-950/30"></div>
 
           <!-- Center Node: YOU -->
-          <div class="relative z-10 w-16 h-16 rounded-full border-4 border-amber-400 bg-gradient-to-tr from-amber-400 to-yellow-500 shadow-2xl flex items-center justify-center text-3xl animate-pulse" style="box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);">
-            👑
+          <div class="relative z-10 w-16 h-16 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-2xl flex items-center justify-center text-2xl animate-pulse" style="box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);">
+            <span class="material-symbols-outlined text-3xl">account_circle</span>
           </div>
 
           <!-- Floating Orbit Avatars -->
@@ -84,6 +85,7 @@ function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends
     return group.map((c, idx) => {
       const pos = getPos(idx, group.length, ringPct);
       const delay = (idx * 0.3) % 4;
+      const initials = getContactInitials(c);
       return `
         <div 
           data-contact-id="${c.id}"
@@ -91,8 +93,8 @@ function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends
           style="left: ${pos.left}; top: ${pos.top}; animation-delay: ${delay}s;"
           title="${escapeHtml(c.name)}"
         >
-          <div class="w-11 h-11 rounded-full bg-slate-900 border-2 product-shadow flex items-center justify-center text-2xl overflow-hidden hover:ring-4 ring-indigo-500/50" style="border-color: ${TIER_CONFIG[c.tier]?.color || '#0066cc'}">
-            <span>${c.avatar || '🍎'}</span>
+          <div class="w-11 h-11 rounded-full bg-slate-900 border-2 product-shadow flex items-center justify-center font-bold text-xs text-slate-100 overflow-hidden hover:ring-4 ring-indigo-500/50" style="border-color: ${TIER_CONFIG[c.tier]?.color || '#0066cc'}">
+            ${c.avatar && isSymbol(c.avatar) ? `<span class="material-symbols-outlined text-lg">${c.avatar}</span>` : `<span>${initials}</span>`}
           </div>
         </div>
       `;
@@ -105,6 +107,19 @@ function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends
     ${renderGroup(family, 75)}
     ${renderGroup([...friends, ...acquaintances], 98)}
   `;
+}
+
+function getContactInitials(c) {
+  if (c.initials) return c.initials;
+  const parts = (c.name || '').trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return (c.name || 'C').substring(0, 2).toUpperCase();
+}
+
+function isSymbol(str) {
+  return typeof str === 'string' && /^[a-z0-9_]+$/.test(str);
 }
 
 function escapeHtml(str) {
