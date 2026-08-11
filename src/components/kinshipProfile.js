@@ -4,12 +4,14 @@ export function renderKinshipProfileDrawer(contact) {
   if (!contact) return '';
 
   const tier = TIER_CONFIG[contact.tier] || TIER_CONFIG.friends;
-  const cleanHandle = encodeURIComponent(contact.instagramHandle ? contact.instagramHandle.replace(/^@/, '').trim() : '');
-  const waUrl = contact.whatsappNumber 
-    ? `https://wa.me/${contact.whatsappNumber.replace(/[^0-9]/g, '')}` 
-    : null;
-  const igUrl = contact.instagramHandle ? `https://instagram.com/${cleanHandle}` : null;
+  const cleanHandle = encodeURIComponent(contact.instagram ? contact.instagram.replace(/^@/, '').trim() : (contact.instagramHandle ? contact.instagramHandle.replace(/^@/, '').trim() : ''));
+  const phoneNum = contact.phone || contact.whatsappNumber || '';
+  const waUrl = phoneNum ? `https://wa.me/${phoneNum.replace(/[^0-9]/g, '')}` : null;
+  const igUrl = cleanHandle ? `https://instagram.com/${cleanHandle}` : null;
   const initials = getContactInitials(contact);
+
+  const attitudeTasks = contact.attitudeTasks || tier.defaultTasks || [];
+  const completedCount = attitudeTasks.filter(t => t.isDone).length;
 
   return `
     <div id="profileDrawerBackdrop" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end animate-fade-in">
@@ -28,12 +30,12 @@ export function renderKinshipProfileDrawer(contact) {
 
         <div class="p-6 space-y-6 flex-1">
           
-          <!-- Hero Section: Museum Gallery Style -->
+          <!-- Hero Section -->
           <section class="flex flex-col items-center justify-center pt-2 pb-4 gap-3 text-center">
             <div class="relative w-28 h-28 rounded-2xl overflow-hidden product-shadow border-4 border-white dark:border-slate-800 bg-gradient-to-tr from-slate-900 to-slate-800 text-white flex items-center justify-center text-3xl font-bold">
               ${contact.avatar && isSymbol(contact.avatar) ? `<span class="material-symbols-outlined text-4xl" style="color: ${tier.color}">${contact.avatar}</span>` : `<span>${initials}</span>`}
               
-              <!-- Inner Orbit Indicator Badge -->
+              <!-- Orbit Indicator Badge -->
               <div class="absolute bottom-2 right-2 backdrop-blur-md rounded-full px-2.5 py-0.5 flex items-center gap-1 border shadow-sm" style="background-color: ${tier.color}15; border-color: ${tier.color}30;">
                 <span class="w-2 h-2 rounded-full" style="background-color: ${tier.color}"></span>
                 <span class="text-[10px] font-bold" style="color: ${tier.color}">${tier.name.split('/')[0].trim()}</span>
@@ -54,7 +56,7 @@ export function renderKinshipProfileDrawer(contact) {
                 </a>
               ` : ''}
               ${igUrl ? `
-                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
                   <span class="material-symbols-outlined text-sm">photo_camera</span>
                   <span>Instagram</span>
                 </a>
@@ -62,26 +64,54 @@ export function renderKinshipProfileDrawer(contact) {
             </div>
           </section>
 
-          <!-- How to Treat Them (Quote Style Card) -->
+          <!-- How to Treat Them (Google Tasks-Style Sub-Task Checklist Card) -->
           <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-3">
-            <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-              <span class="material-symbols-outlined text-lg">auto_awesome</span>
-              <h2>How to Treat Them</h2>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                <span class="material-symbols-outlined text-lg">check_circle</span>
+                <h2>How to Treat Them (Tasks)</h2>
+              </div>
+              <span class="text-xs font-bold text-slate-400">${completedCount} / ${attitudeTasks.length} Done</span>
             </div>
-            <div class="border-l-4 pl-4 py-1 text-xs leading-relaxed text-slate-700 dark:text-slate-300 relative whitespace-pre-line" style="border-color: ${tier.color}">
-              ${escapeHtml(contact.attitudeGuide?.howToTreat || tier.template.howToTreat)}
-            </div>
-          </section>
 
-          <!-- Do's & Don'ts Card -->
-          <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-3">
-            <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-              <span class="material-symbols-outlined text-lg">checklist</span>
-              <h2>Do's & Don'ts</h2>
+            <!-- Task Items Checklist -->
+            <div class="space-y-2 pt-1">
+              ${attitudeTasks.length > 0 ? attitudeTasks.map(task => `
+                <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                  <label class="flex items-center gap-2.5 flex-1 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      class="task-toggle-checkbox w-4 h-4 text-emerald-600 rounded border-slate-300 dark:border-slate-700 focus:ring-emerald-500" 
+                      data-task-id="${task.id}" 
+                      ${task.isDone ? 'checked' : ''} 
+                    />
+                    <span class="text-xs font-semibold ${task.isDone ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'}">
+                      ${escapeHtml(task.text)}
+                    </span>
+                  </label>
+                  <button class="btn-delete-task text-slate-400 hover:text-rose-500 text-xs p-1" data-task-id="${task.id}" title="Hapus Poin">
+                    <span class="material-symbols-outlined text-base">close</span>
+                  </button>
+                </div>
+              `).join('') : `
+                <div class="text-xs text-slate-400 italic">Belum ada poin instruksi. Klik "+ Tambah Poin" di bawah.</div>
+              `}
             </div>
-            <div class="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
-              ${escapeHtml(contact.attitudeGuide?.doAndDonts || tier.template.doAndDonts)}
-            </div>
+
+            <!-- Add Task Input Bar -->
+            <form id="formAddAttitudeTask" class="flex items-center gap-2 pt-2">
+              <input 
+                type="text" 
+                id="inputNewTaskText"
+                placeholder="Tambah poin tindakan baru..." 
+                class="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl border-none text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500" 
+                required
+              />
+              <button type="submit" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center gap-1">
+                <span class="material-symbols-outlined text-base">add</span>
+                <span>Tambah</span>
+              </button>
+            </form>
           </section>
 
           <!-- Personal Notes & Reminders Card -->
@@ -91,25 +121,7 @@ export function renderKinshipProfileDrawer(contact) {
               <h2>Memory Notes & Reminders</h2>
             </div>
             <div class="text-xs leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-line">
-              ${escapeHtml(contact.attitudeGuide?.notes || tier.template.notes)}
-            </div>
-          </section>
-
-          <!-- Memory Log Timeline Section -->
-          <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 product-shadow border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                <span class="material-symbols-outlined text-lg">history_edu</span>
-                <h2>Memory Log</h2>
-              </div>
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Timeline</span>
-            </div>
-            <div class="flex flex-col gap-3 relative pl-4 border-l-2 border-slate-200 dark:border-slate-700 text-xs">
-              <div class="relative">
-                <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
-                <p class="text-[10px] font-bold text-slate-400 mb-0.5">Added to Orbit</p>
-                <p class="text-slate-700 dark:text-slate-300">${new Date(contact.createdAt || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-              </div>
+              ${escapeHtml(contact.notes || 'Belum ada catatan memori.')}
             </div>
           </section>
 

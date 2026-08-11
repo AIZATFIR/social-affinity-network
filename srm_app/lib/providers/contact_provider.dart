@@ -46,6 +46,10 @@ class ContactProvider extends ChangeNotifier {
     return list;
   }
 
+  List<Contact> getContactsInTier(String tierKey) {
+    return _contacts.where((c) => c.tier == tierKey).toList();
+  }
+
   void setFilter(String tierKey) {
     _selectedTierFilter = tierKey;
     notifyListeners();
@@ -166,7 +170,7 @@ class ContactProvider extends ChangeNotifier {
 
   // Health Score Calculation
   int get healthScore {
-    if (_contacts.isEmpty) return 0;
+    if (_contacts.isEmpty) return 100;
     int score = 95;
     final loversCount = _contacts.where((c) => c.tier == 'lovers').length;
     final closeCount = _contacts.where((c) => c.tier == 'close_friends').length;
@@ -175,4 +179,6 @@ class ContactProvider extends ChangeNotifier {
     if (closeCount > 5) score -= 15;
     return score.clamp(0, 100);
   }
+
+  int get networkHealthScore => healthScore;
 }

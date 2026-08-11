@@ -196,7 +196,7 @@ class _AddContactDialogState extends State<AddContactDialog> {
 
                 // Dunbar Tier Selection
                 DropdownButtonFormField<String>(
-                  value: _selectedTier,
+                  initialValue: _selectedTier,
                   decoration: const InputDecoration(
                     labelText: 'Dunbar Social Circle *',
                     border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),

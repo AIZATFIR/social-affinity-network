@@ -4,8 +4,8 @@ export function renderMyCircles(contacts) {
   return `
     <div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
       
-      <!-- Page Header -->
-      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow flex justify-between items-center">
+      <!-- Page Header with Batch Transfer & Social Import -->
+      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 class="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400">blur_on</span>
@@ -16,10 +16,16 @@ export function renderMyCircles(contacts) {
           </p>
         </div>
 
-        <button id="btnQuickAdd" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-full transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1.5 product-shadow">
-          <span class="material-symbols-outlined text-base">add</span>
-          <span>Tambah</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="btnOpenBatchModal" class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-semibold text-xs rounded-full transition-all flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800">
+            <span class="material-symbols-outlined text-base">swap_horiz</span>
+            <span>Pindah Batch</span>
+          </button>
+          <button id="btnOpenSocialModal" class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-semibold text-xs rounded-full transition-all flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800">
+            <span class="material-symbols-outlined text-base">share</span>
+            <span>Import Social</span>
+          </button>
+        </div>
       </div>
 
       <!-- Dunbar Tier Cards -->
@@ -85,17 +91,8 @@ export function renderMyCircles(contacts) {
                   </div>
                 </div>
               ` : `
-                <div class="text-xs text-slate-400 italic pt-1">Belum ada teman di lingkaran ini.</div>
+                <div class="text-xs text-slate-400 italic pt-1">Belum ada kontak di lingkaran ini.</div>
               `}
-
-              <!-- Template Guideline Accordion/Preview -->
-              <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-600 dark:text-slate-400 space-y-1 bg-slate-50/50 dark:bg-slate-950/30 p-3 rounded-2xl">
-                <div class="font-bold text-[11px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">lightbulb</span>
-                  <span>Panduan Interaksi Default:</span>
-                </div>
-                <div class="whitespace-pre-line text-[11px] leading-relaxed opacity-90">${escapeHtml(config.template.howToTreat)}</div>
-              </div>
 
             </div>
           `;

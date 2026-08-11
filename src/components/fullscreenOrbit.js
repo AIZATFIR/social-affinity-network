@@ -19,9 +19,9 @@ export function renderFullscreenOrbit(contacts) {
           <div>
             <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
               <span class="material-symbols-outlined text-indigo-400">blur_on</span>
-              <span>Immersive Canvas Orbit</span>
+              <span>Obsidian Orbit Canvas</span>
             </h1>
-            <p class="text-xs text-slate-400">Fullscreen Visual Dunbar Social Rings</p>
+            <p class="text-xs text-slate-400">Visual Dunbar Intimacy Orbit (1500 Outer Limit)</p>
           </div>
         </div>
 
@@ -33,18 +33,19 @@ export function renderFullscreenOrbit(contacts) {
       </header>
 
       <!-- Main Canvas Area -->
-      <main class="flex-1 relative flex items-center justify-center bg-radial-dark p-4 overflow-hidden">
+      <main class="flex-1 relative flex items-center justify-center bg-slate-950 p-4 overflow-hidden">
         
-        <!-- Background Ambient Grid Particles -->
-        <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:32px_32px]"></div>
+        <!-- Background Ambient Grid Lines -->
+        <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:36px_36px]"></div>
 
         <div class="orbit-container w-full max-w-[560px] aspect-square relative flex items-center justify-center">
           
           <!-- Concentric Orbit Rings -->
           <div class="ring w-full h-full border-slate-700/60 bg-slate-800/10"></div>
-          <div class="ring w-[75%] h-[75%] border-emerald-500/30 bg-emerald-950/20"></div>
-          <div class="ring w-[50%] h-[50%] border-amber-500/30 bg-amber-950/20"></div>
-          <div class="ring w-[26%] h-[26%] border-rose-500/40 bg-rose-950/30"></div>
+          <div class="ring w-[75%] h-[75%] border-indigo-500/30 bg-indigo-950/20"></div>
+          <div class="ring w-[55%] h-[55%] border-emerald-500/30 bg-emerald-950/20"></div>
+          <div class="ring w-[38%] h-[38%] border-amber-500/30 bg-amber-950/20"></div>
+          <div class="ring w-[20%] h-[20%] border-rose-500/40 bg-rose-950/30"></div>
 
           <!-- Center Node: YOU -->
           <div class="relative z-10 w-16 h-16 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-2xl flex items-center justify-center text-2xl animate-pulse" style="box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);">
@@ -59,10 +60,11 @@ export function renderFullscreenOrbit(contacts) {
         <!-- Tier Legend Overlay -->
         <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800 space-y-2 text-xs product-shadow">
           <div class="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Orbit Ring Legend</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FF2D55]"></span> Lovers / Intimate (26%)</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FFCC00]"></span> Close Friends (50%)</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span> Family (75%)</div>
-          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#5856D6]"></span> Friends & Outer Network (100%)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FF2D55]"></span> Lovers / Pasangan (1)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FFCC00]"></span> Close Friends (5)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#34C759]"></span> Keluarga (10)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#5856D6]"></span> Teman (150)</div>
+          <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#64748B]"></span> Kenalan / Network (1500)</div>
         </div>
 
       </main>
@@ -102,10 +104,11 @@ function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends
   };
 
   return `
-    ${renderGroup(lovers, 26)}
-    ${renderGroup(closeFriends, 50)}
-    ${renderGroup(family, 75)}
-    ${renderGroup([...friends, ...acquaintances], 98)}
+    ${renderGroup(lovers, 20)}
+    ${renderGroup(closeFriends, 38)}
+    ${renderGroup(family, 55)}
+    ${renderGroup(friends, 75)}
+    ${renderGroup(acquaintances, 98)}
   `;
 }
 

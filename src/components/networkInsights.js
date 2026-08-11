@@ -4,15 +4,24 @@ export function renderNetworkInsights(contacts) {
   const totalCount = contacts.length;
   const loversCount = contacts.filter(c => c.tier === 'lovers').length;
   const closeCount = contacts.filter(c => c.tier === 'close_friends').length;
-  const familyCount = contacts.filter(c => c.tier === 'family').length;
 
   // Calculate Health Index (0-100%) based on Dunbar balance
-  let healthScore = 92;
+  let healthScore = 95;
   if (loversCount > 1) healthScore -= 20;
   if (closeCount > 5) healthScore -= 15;
-  if (totalCount === 0) healthScore = 0;
+  if (totalCount === 0) healthScore = 100;
   healthScore = Math.max(0, Math.min(100, healthScore));
 
+  // Calculate Social Energy Budget Expenditure
+  let totalEnergySpent = 0.0;
+  contacts.forEach(c => {
+    const cfg = TIER_CONFIG[c.tier];
+    if (cfg && cfg.energyWeight) {
+      totalEnergySpent += cfg.energyWeight;
+    }
+  });
+
+  const isBurnoutRisk = totalEnergySpent > 100.0 || loversCount > 1;
   const priorityContacts = contacts.filter(c => ['lovers', 'close_friends', 'family'].includes(c.tier));
 
   return `
@@ -22,46 +31,50 @@ export function renderNetworkInsights(contacts) {
       <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow">
         <h1 class="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-indigo-600 dark:text-indigo-400">insights</span>
-          <span>Analitik Kesehatan Hubungan</span>
+          <span>Alokasi Energi & Health Score</span>
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Evaluasi keseimbangan jaringan sosial dan pola interaksi menurut Hukum Dunbar
+          Menjaga batasan energi sosial agar tidak burnout emosional.
         </p>
       </div>
 
-      <!-- Health Score Metrics Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        
-        <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow flex flex-col justify-between">
-          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-indigo-500 text-sm">favorite</span>
-            <span>Skor Kesehatan Hubungan</span>
-          </div>
-          <div class="my-3 flex items-baseline gap-2">
-            <span class="text-4xl font-black text-indigo-600 dark:text-indigo-400">${healthScore}%</span>
-            <span class="text-xs font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-              ${healthScore >= 80 ? 'Optimal' : healthScore >= 50 ? 'Sedang' : 'Perlu Perhatian'}
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-            Jaringan sosial Anda memiliki rasio kapasitas yang seimbang sesuai Dunbar circles.
-          </p>
+      <!-- Health Score Card -->
+      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow flex items-center gap-5">
+        <div class="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
+          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+            <path class="text-slate-100 dark:text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="${healthScore >= 80 ? 'text-emerald-500' : healthScore >= 50 ? 'text-amber-500' : 'text-rose-500'}" stroke-dasharray="${healthScore}, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="absolute text-xl font-extrabold text-slate-900 dark:text-white">${healthScore}</span>
         </div>
 
-        <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow flex flex-col justify-between">
-          <div class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-amber-500 text-sm">groups</span>
-            <span>Total Kontak Terdata</span>
-          </div>
-          <div class="my-3 flex items-baseline gap-2">
-            <span class="text-4xl font-black text-slate-900 dark:text-white">${totalCount}</span>
-            <span class="text-xs font-semibold text-slate-400">/ 146 Max</span>
-          </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-            Batas kognitif maksimal Dunbar adalah 150 kontak sosial aktif.
+        <div class="space-y-1">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-white">Kesehatan Relasi Sosial</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            ${healthScore >= 80 ? 'Sangat Ideal! Kapasitas relasi sosial Anda seimbang sesuai batas Dunbar.' : (loversCount > 1 ? 'Peringatan: Lovers melebihi batas 1 orang.' : 'Perlu penyesuaian alokasi energi relasi.')}
           </p>
         </div>
+      </div>
 
+      <!-- Social Energy Budget Expenditure Card -->
+      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border ${isBurnoutRisk ? 'border-rose-500 dark:border-rose-700' : 'border-slate-200/80 dark:border-slate-800'} product-shadow space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+            <span class="material-symbols-outlined text-amber-500">bolt</span>
+            <h2>Alokasi Energi Emosional Harian</h2>
+          </div>
+          <span class="text-xs font-extrabold ${isBurnoutRisk ? 'text-rose-500' : 'text-emerald-500'}">
+            ${totalEnergySpent.toFixed(1)}% / 100%
+          </span>
+        </div>
+
+        <div class="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500 ${isBurnoutRisk ? 'bg-rose-500' : 'bg-indigo-600'}" style="width: ${Math.min(100, totalEnergySpent)}%"></div>
+        </div>
+
+        <p class="text-xs ${isBurnoutRisk ? 'text-rose-500 font-semibold' : 'text-slate-500 dark:text-slate-400'}">
+          ${isBurnoutRisk ? '⚠️ Peringatan Overload: Anda menginvestasikan energi melebihi batas 100%. Pindahkan beberapa kontak ke Kenalan (1500 limit).' : '💡 Investasi energi Anda sehat. Ingat, kenalan 1500 tidak sedalam Teman Dekat (5) & Teman (150).'}
+        </p>
       </div>
 
       <!-- Circle Distribution Graph Card -->
@@ -83,7 +96,7 @@ export function renderNetworkInsights(contacts) {
                   </span>
                   <span class="text-slate-500 dark:text-slate-400">${count} Kontak (${percent}%)</span>
                 </div>
-                <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div class="h-full rounded-full transition-all duration-500" style="width: ${percent}%; background-color: ${config.color}"></div>
                 </div>
               </div>

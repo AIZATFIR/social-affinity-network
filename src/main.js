@@ -8,6 +8,8 @@ import { renderMyCircles } from './components/myCircles.js';
 import { renderNetworkInsights } from './components/networkInsights.js';
 import { renderKinshipProfileDrawer } from './components/kinshipProfile.js';
 import { renderContactModal } from './components/contactModal.js';
+import { renderBatchGroupingModal } from './components/batchGroupingModal.js';
+import { renderSocialImportModal } from './components/socialImportModal.js';
 
 import './style.css';
 
@@ -21,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedContactId = null;
   let editingContact = null;
   let isModalOpen = false;
+  let isBatchModalOpen = false;
+  let isSocialModalOpen = false;
+  let batchSelectedIds = new Set();
+  let batchTargetTier = 'friends';
+  let batchSearchFilter = '';
   let currentUser = null;
   let cloudUnsubscribe = null;
 
@@ -55,8 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="material-symbols-outlined text-2xl">blur_on</span>
               </div>
               <div>
-                <h1 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Social Circle Manager</h1>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">Dunbar's Intimacy Orbit System</p>
+                <h1 class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">Social Relation Manager</h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">SRM Intimacy & Dunbar Energy System</p>
               </div>
             </div>
 
@@ -71,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <button id="addContactBtn" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-full transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1 product-shadow">
                 <span class="material-symbols-outlined text-sm">add</span>
-                <span class="hidden sm:inline">Add Contact</span>
+                <span class="hidden sm:inline">Tambah Kontak</span>
               </button>
 
               <button id="authBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full transition-all flex items-center gap-1 border border-slate-200 dark:border-slate-700">
@@ -97,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="max-w-md mx-auto flex justify-between items-center relative">
             
             <button data-tab="orbit" class="nav-tab-btn flex flex-col items-center gap-1 ${activeTab === 'orbit' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'}">
-              <span class="material-symbols-outlined text-xl">home</span>
+              <span class="material-symbols-outlined text-xl">blur_on</span>
               <span class="text-[10px] font-bold uppercase tracking-widest">Orbit</span>
             </button>
 
@@ -108,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <!-- Floating Center Add Contact Action Button -->
             <div class="relative -top-6">
-              <button id="floatingAddBtn" class="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl shadow-indigo-500/30 flex items-center justify-center border-4 border-canvas-parchment dark:border-slate-900 hover:scale-105 transition-transform" title="Add Contact">
+              <button id="floatingAddBtn" class="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-xl shadow-indigo-500/30 flex items-center justify-center border-4 border-canvas-parchment dark:border-slate-900 hover:scale-105 transition-transform" title="Tambah Kontak">
                 <span class="material-symbols-outlined text-3xl">add</span>
               </button>
             </div>
@@ -131,6 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Add/Edit Contact Modal -->
         ${isModalOpen ? renderContactModal(editingContact) : ''}
+
+        <!-- Batch Grouping Transfer Modal -->
+        ${isBatchModalOpen ? renderBatchGroupingModal(contacts, batchSelectedIds, batchTargetTier, batchSearchFilter) : ''}
+
+        <!-- Social / LinkedIn Import Modal -->
+        ${isSocialModalOpen ? renderSocialImportModal() : ''}
 
       </div>
     `;
@@ -176,13 +189,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Dashboard Buttons
+    // Dashboard & Circles Buttons
     document.getElementById('btnOpenCircles')?.addEventListener('click', () => {
       activeTab = 'circles';
-      renderApp();
-    });
-    document.getElementById('btnOpenInsights')?.addEventListener('click', () => {
-      activeTab = 'insights';
       renderApp();
     });
 
@@ -225,6 +234,56 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Sub-Task Checklist (Google Tasks Style)
+    document.querySelectorAll('.task-toggle-checkbox').forEach(cb => {
+      cb.addEventListener('change', async (e) => {
+        const taskId = e.target.getAttribute('data-task-id');
+        const contacts = StorageManager.getContacts();
+        const contact = contacts.find(c => c.id === selectedContactId);
+        if (contact && contact.attitudeTasks) {
+          const task = contact.attitudeTasks.find(t => t.id === taskId);
+          if (task) {
+            task.isDone = e.target.checked;
+            await StorageManager.saveContact(contact, currentUser?.uid);
+            renderApp();
+          }
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-delete-task').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const taskId = e.currentTarget.getAttribute('data-task-id');
+        const contacts = StorageManager.getContacts();
+        const contact = contacts.find(c => c.id === selectedContactId);
+        if (contact && contact.attitudeTasks) {
+          contact.attitudeTasks = contact.attitudeTasks.filter(t => t.id !== taskId);
+          await StorageManager.saveContact(contact, currentUser?.uid);
+          renderApp();
+        }
+      });
+    });
+
+    document.getElementById('formAddAttitudeTask')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('inputNewTaskText');
+      const text = input ? input.value.trim() : '';
+      if (text && selectedContactId) {
+        const contacts = StorageManager.getContacts();
+        const contact = contacts.find(c => c.id === selectedContactId);
+        if (contact) {
+          contact.attitudeTasks = contact.attitudeTasks || [];
+          contact.attitudeTasks.push({
+            id: Date.now().toString(),
+            text,
+            isDone: false
+          });
+          await StorageManager.saveContact(contact, currentUser?.uid);
+          renderApp();
+        }
+      }
+    });
+
     // Edit Contact
     document.getElementById('btnEditContact')?.addEventListener('click', () => {
       const contacts = StorageManager.getContacts();
@@ -243,63 +302,143 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Modal Controls
-    document.getElementById('addContactBtn')?.addEventListener('click', () => {
+    // Add Modal Controls
+    const openAddModal = () => {
       editingContact = null;
       isModalOpen = true;
       renderApp();
-    });
-    document.getElementById('floatingAddBtn')?.addEventListener('click', () => {
-      editingContact = null;
-      isModalOpen = true;
-      renderApp();
-    });
-    document.getElementById('btnQuickAdd')?.addEventListener('click', () => {
-      editingContact = null;
-      isModalOpen = true;
-      renderApp();
-    });
+    };
+    document.getElementById('addContactBtn')?.addEventListener('click', openAddModal);
+    document.getElementById('floatingAddBtn')?.addEventListener('click', openAddModal);
     document.getElementById('btnCloseModal')?.addEventListener('click', () => {
       isModalOpen = false;
       editingContact = null;
       renderApp();
     });
-    document.getElementById('btnCancelModal')?.addEventListener('click', () => {
-      isModalOpen = false;
-      editingContact = null;
+
+    // Batch Modal Controls
+    const openBatchModal = () => {
+      batchSelectedIds.clear();
+      isBatchModalOpen = true;
+      renderApp();
+    };
+    document.getElementById('btnOpenBatchModal')?.addEventListener('click', openBatchModal);
+    document.getElementById('btnOpenBatchModalTop')?.addEventListener('click', openBatchModal);
+    document.getElementById('btnCloseBatchModal')?.addEventListener('click', () => {
+      isBatchModalOpen = false;
       renderApp();
     });
 
-    // Avatar Selector in Modal
-    document.querySelectorAll('.avatar-preset-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const emoji = e.currentTarget.getAttribute('data-avatar');
-        document.querySelectorAll('.avatar-preset-btn').forEach(b => {
-          b.classList.remove('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110');
-          b.classList.add('border-slate-200', 'dark:border-slate-700', 'bg-white', 'dark:bg-slate-800');
-        });
-        e.currentTarget.classList.add('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110');
-        const input = document.getElementById('selectedAvatarInput');
-        if (input) input.value = emoji;
+    document.getElementById('batchTargetTierSelect')?.addEventListener('change', (e) => {
+      batchTargetTier = e.target.value;
+    });
+
+    document.getElementById('batchSearchInput')?.addEventListener('input', (e) => {
+      batchSearchFilter = e.target.value;
+      renderApp();
+    });
+
+    document.getElementById('btnToggleSelectAll')?.addEventListener('click', () => {
+      const contacts = StorageManager.getContacts();
+      let list = contacts;
+      if (batchSearchFilter.trim()) {
+        const q = batchSearchFilter.toLowerCase();
+        list = list.filter(c => c.name.toLowerCase().includes(q));
+      }
+      if (batchSelectedIds.size === list.length && list.length > 0) {
+        batchSelectedIds.clear();
+      } else {
+        list.forEach(c => batchSelectedIds.add(c.id));
+      }
+      renderApp();
+    });
+
+    document.querySelectorAll('.batch-contact-checkbox').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const id = e.target.getAttribute('data-id');
+        if (e.target.checked) {
+          batchSelectedIds.add(id);
+        } else {
+          batchSelectedIds.delete(id);
+        }
       });
     });
 
-    // Contact Form Submit
+    document.getElementById('btnSubmitBatchMove')?.addEventListener('click', async () => {
+      if (batchSelectedIds.size > 0) {
+        const contacts = StorageManager.getContacts();
+        for (const id of batchSelectedIds) {
+          const contact = contacts.find(c => c.id === id);
+          if (contact) {
+            contact.tier = batchTargetTier;
+            contact.attitudeTasks = TIER_CONFIG[batchTargetTier]?.defaultTasks || [];
+            await StorageManager.saveContact(contact, currentUser?.uid);
+          }
+        }
+        isBatchModalOpen = false;
+        batchSelectedIds.clear();
+        renderApp();
+      }
+    });
+
+    // Social Import Modal Controls
+    const openSocialModal = () => {
+      isSocialModalOpen = true;
+      renderApp();
+    };
+    document.getElementById('btnOpenSocialModal')?.addEventListener('click', openSocialModal);
+    document.getElementById('btnOpenSocialModalTop')?.addEventListener('click', openSocialModal);
+    document.getElementById('btnCloseSocialModal')?.addEventListener('click', () => {
+      isSocialModalOpen = false;
+      renderApp();
+    });
+
+    document.getElementById('btnSubmitSocialImport')?.addEventListener('click', async () => {
+      const input = document.getElementById('socialImportInput');
+      const targetTierSelect = document.getElementById('socialTargetTierSelect');
+      const raw = input ? input.value.trim() : '';
+      const tier = targetTierSelect ? targetTierSelect.value : 'acquaintances';
+
+      if (raw) {
+        const lines = raw.split('\n');
+        for (const line of lines) {
+          const text = line.trim();
+          if (!text) continue;
+          const parts = text.split(',');
+          const name = parts[0].trim();
+          const instagram = parts.length > 1 ? parts[1].trim() : '';
+          const initials = (name.split(' ').length >= 2 ? name.split(' ')[0][0] + name.split(' ')[1][0] : name.substring(0, 2)).toUpperCase();
+
+          await StorageManager.saveContact({
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+            name,
+            avatar: 'work',
+            initials,
+            tier,
+            instagram,
+            notes: 'Diimpor dari LinkedIn / Social Followers',
+            attitudeTasks: TIER_CONFIG[tier]?.defaultTasks || []
+          }, currentUser?.uid);
+        }
+        isSocialModalOpen = false;
+        renderApp();
+      }
+    });
+
+    // Contact Form Submit Modal
     document.getElementById('contactForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
+      const tier = formData.get('tier');
       const contactData = {
         id: formData.get('id') || Date.now().toString(),
         name: formData.get('name'),
-        avatar: formData.get('avatar') || '🍎',
-        tier: formData.get('tier'),
-        whatsappNumber: formData.get('whatsappNumber'),
-        instagramHandle: formData.get('instagramHandle'),
-        attitudeGuide: {
-          howToTreat: formData.get('howToTreat') || TIER_CONFIG[formData.get('tier')]?.template.howToTreat,
-          doAndDonts: TIER_CONFIG[formData.get('tier')]?.template.doAndDonts,
-          notes: formData.get('notes') || TIER_CONFIG[formData.get('tier')]?.template.notes
-        },
+        avatar: formData.get('avatar') || 'person',
+        tier,
+        phone: formData.get('whatsappNumber') || formData.get('phone') || '',
+        instagram: formData.get('instagramHandle') || formData.get('instagram') || '',
+        notes: formData.get('notes') || '',
+        attitudeTasks: editingContact?.attitudeTasks || TIER_CONFIG[tier]?.defaultTasks || [],
         createdAt: editingContact?.createdAt || new Date().toISOString()
       };
 
@@ -324,34 +463,6 @@ document.addEventListener('DOMContentLoaded', () => {
           await signInWithPopup(auth, googleProvider);
         } catch (err) {
           console.warn('Auth popup error:', err);
-        }
-      }
-    });
-
-    // Import Contacts from Device
-    document.getElementById('importContactsBtn')?.addEventListener('click', async () => {
-      if ('contacts' in navigator && 'Select' in window.ContactsManager) {
-        try {
-          const props = ['name', 'tel'];
-          const opts = { multiple: true };
-          const imported = await navigator.contacts.select(props, opts);
-          if (imported && imported.length > 0) {
-            for (const item of imported) {
-              const name = item.name ? item.name[0] : 'Kontak HP';
-              const tel = item.tel ? item.tel[0] : '';
-              await StorageManager.saveContact({
-                name,
-                avatar: '📱',
-                tier: 'friends',
-                whatsappNumber: tel,
-                instagramHandle: '',
-                attitudeGuide: TIER_CONFIG.friends.template
-              }, currentUser?.uid);
-            }
-            renderApp();
-          }
-        } catch (e) {
-          console.warn('Import error:', e);
         }
       }
     });

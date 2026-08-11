@@ -39,102 +39,118 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
     final contacts = provider.filteredContacts;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    const double canvasSize = 2000.0;
+    const double canvasSize = 3600.0;
     const Offset centerOffset = Offset(canvasSize / 2, canvasSize / 2);
 
-    return Stack(
-      children: [
-        // Interactive Obsidian-Style Zoom & Pan Canvas
-        InteractiveViewer(
-          transformationController: _transformationController,
-          minScale: 0.2,
-          maxScale: 3.5,
-          boundaryMargin: const EdgeInsets.all(1000),
-          child: SizedBox(
-            width: canvasSize,
-            height: canvasSize,
-            child: Stack(
-              children: [
-                // CustomPainter for Orbit Concentric Rings
-                CustomPaint(
-                  size: const Size(canvasSize, canvasSize),
-                  painter: OrbitPainter(isDark: isDark),
-                ),
+    return Container(
+      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F7),
+      child: Stack(
+        children: [
+          // Interactive Obsidian-Style Zoom & Pan Canvas
+          InteractiveViewer(
+            transformationController: _transformationController,
+            minScale: 0.1,
+            maxScale: 3.5,
+            boundaryMargin: const EdgeInsets.all(2000),
+            clipBehavior: Clip.none,
+            child: SizedBox(
+              width: canvasSize,
+              height: canvasSize,
+              child: Stack(
+                children: [
+                  // CustomPainter for Concentric Rings & Grid Background
+                  CustomPaint(
+                    size: const Size(canvasSize, canvasSize),
+                    painter: OrbitPainter(isDark: isDark),
+                  ),
 
-                // Center Node: YOU
-                Positioned(
-                  left: centerOffset.dx - 32,
-                  top: centerOffset.dy - 32,
-                  child: Tooltip(
-                    message: 'Center Orbit (YOU)',
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        border: Border.all(color: const Color(0xFFFFCC00), width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFCC00).withValues(alpha: 0.4),
-                            blurRadius: 24,
-                            spreadRadius: 4,
-                          )
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.account_circle, size: 36, color: Color(0xFFFFCC00)),
+                  // Center Node: YOU (Inner Intimacy Core)
+                  Positioned(
+                    left: centerOffset.dx - 36,
+                    top: centerOffset.dy - 36,
+                    child: Tooltip(
+                      message: 'Pusat Energi Sosialisasi (YOU)',
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          border: Border.all(color: const Color(0xFFFFCC00), width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFCC00).withValues(alpha: 0.4),
+                              blurRadius: 28,
+                              spreadRadius: 4,
+                            )
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.account_circle, size: 40, color: Color(0xFFFFCC00)),
+                        ),
                       ),
                     ),
                   ),
+
+                  // Contact Orbit Nodes
+                  ..._buildOrbitNodes(contacts, centerOffset),
+                ],
+              ),
+            ),
+          ),
+
+          // Controls overlay: Reset Zoom & Legend
+          Positioned(
+            top: 16,
+            right: 16,
+            child: FloatingActionButton.small(
+              onPressed: _resetZoom,
+              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              child: const Icon(Icons.center_focus_strong, size: 20),
+            ),
+          ),
+
+          // Bottom Legend Overlay (Dunbar 1500 & Social Energy Cues)
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 16,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: (isDark ? const Color(0xFF0F172A) : Colors.white).withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 16,
+                    )
+                  ],
                 ),
-
-                // Contact Orbit Nodes
-                ..._buildOrbitNodes(contacts, centerOffset),
-              ],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildLegendDot('Lovers (1)', const Color(0xFFFF2D55)),
+                      const SizedBox(width: 12),
+                      _buildLegendDot('Close (5)', const Color(0xFFFFCC00)),
+                      const SizedBox(width: 12),
+                      _buildLegendDot('Family (10)', const Color(0xFF34C759)),
+                      const SizedBox(width: 12),
+                      _buildLegendDot('Friends (150)', const Color(0xFF5856D6)),
+                      const SizedBox(width: 12),
+                      _buildLegendDot('Network (1500)', const Color(0xFF64748B)),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-
-        // Controls overlay: Reset Zoom & Legend
-        Positioned(
-          top: 16,
-          right: 16,
-          child: FloatingActionButton.small(
-            onPressed: _resetZoom,
-            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-            child: const Icon(Icons.center_focus_strong, size: 20),
-          ),
-        ),
-
-        // Bottom Legend Overlay
-        Positioned(
-          bottom: 16,
-          left: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: (isDark ? const Color(0xFF0F172A) : Colors.white).withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildLegendDot('Lovers', const Color(0xFFFF2D55)),
-                const SizedBox(width: 10),
-                _buildLegendDot('Close', const Color(0xFFFFCC00)),
-                const SizedBox(width: 10),
-                _buildLegendDot('Family', const Color(0xFF34C759)),
-                const SizedBox(width: 10),
-                _buildLegendDot('Friends', const Color(0xFF5856D6)),
-                const SizedBox(width: 10),
-                _buildLegendDot('1500 Network', const Color(0xFF64748B)),
-              ],
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -193,8 +209,8 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
                     border: Border.all(color: config.color, width: 2.5),
                     boxShadow: [
                       BoxShadow(
-                        color: config.color.withValues(alpha: 0.3),
-                        blurRadius: 10,
+                        color: config.color.withValues(alpha: 0.35),
+                        blurRadius: 12,
                         spreadRadius: 1,
                       )
                     ],
@@ -228,14 +244,14 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
     return Row(
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 9,
+          height: 9,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
         ),
       ],
     );
