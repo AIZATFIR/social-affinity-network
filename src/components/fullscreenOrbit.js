@@ -1,5 +1,16 @@
 import { TIER_CONFIG } from '../types.js';
 
+function getFullscreenPosition(contact, index, total, ringPercentage) {
+  if (contact.leftPos && contact.topPos) {
+    return { left: contact.leftPos, top: contact.topPos };
+  }
+  const angle = (index / Math.max(total, 1)) * 2 * Math.PI - Math.PI / 2;
+  const radius = ringPercentage / 2;
+  const left = 50 + radius * Math.cos(angle);
+  const top = 50 + radius * Math.sin(angle);
+  return { left: `${left}%`, top: `${top}%` };
+}
+
 export function renderFullscreenOrbit(contacts) {
   const lovers = contacts.filter(c => c.tier === 'lovers');
   const closeFriends = contacts.filter(c => c.tier === 'close_friends');
@@ -21,13 +32,14 @@ export function renderFullscreenOrbit(contacts) {
               <span class="material-symbols-outlined text-indigo-400">blur_on</span>
               <span>Obsidian Orbit Canvas</span>
             </h1>
-            <p class="text-xs text-slate-400">Visual Dunbar Intimacy Orbit (1500 Outer Limit)</p>
+            <p class="text-xs text-slate-400">Visual Dunbar Intimacy Orbit (Geser node bebas di diagram)</p>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-indigo-400 bg-indigo-950 px-3 py-1.5 rounded-full border border-indigo-800">
-            Total: ${contacts.length} Contacts
+          <span class="text-xs font-bold text-indigo-400 bg-indigo-950 px-3 py-1.5 rounded-full border border-indigo-800 flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">drag_pan</span>
+            <span>Total: ${contacts.length} Contacts</span>
           </span>
         </div>
       </header>
@@ -38,7 +50,7 @@ export function renderFullscreenOrbit(contacts) {
         <!-- Background Ambient Grid Lines -->
         <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:36px_36px]"></div>
 
-        <div class="orbit-container w-full max-w-[560px] aspect-square relative flex items-center justify-center">
+        <div class="orbit-container w-full max-w-[560px] aspect-square relative flex items-center justify-center touch-none select-none">
           
           <!-- Concentric Orbit Rings -->
           <div class="ring w-full h-full border-slate-700/60 bg-slate-800/10"></div>
@@ -48,17 +60,17 @@ export function renderFullscreenOrbit(contacts) {
           <div class="ring w-[20%] h-[20%] border-rose-500/40 bg-rose-950/30"></div>
 
           <!-- Center Node: YOU -->
-          <div class="relative z-10 w-16 h-16 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-2xl flex items-center justify-center text-2xl animate-pulse" style="box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);">
+          <div class="relative z-10 w-16 h-16 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-2xl flex items-center justify-center text-2xl animate-pulse pointer-events-none" style="box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);">
             <span class="material-symbols-outlined text-3xl">account_circle</span>
           </div>
 
-          <!-- Floating Orbit Avatars -->
+          <!-- Floating Interactive Orbit Avatars -->
           ${renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends, acquaintances)}
 
         </div>
 
         <!-- Tier Legend Overlay -->
-        <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800 space-y-2 text-xs product-shadow">
+        <div class="absolute bottom-6 left-6 bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800 space-y-2 text-xs product-shadow pointer-events-none">
           <div class="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">Orbit Ring Legend</div>
           <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FF2D55]"></span> Lovers / Pasangan (1)</div>
           <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#FFCC00]"></span> Close Friends (5)</div>
@@ -74,25 +86,15 @@ export function renderFullscreenOrbit(contacts) {
 }
 
 function renderFullscreenAvatars(contacts, lovers, closeFriends, family, friends, acquaintances) {
-  const getPos = (idx, total, pct) => {
-    const angle = (idx / Math.max(total, 1)) * 2 * Math.PI - Math.PI / 2;
-    const radius = pct / 2;
-    return {
-      left: `${50 + radius * Math.cos(angle)}%`,
-      top: `${50 + radius * Math.sin(angle)}%`
-    };
-  };
-
   const renderGroup = (group, ringPct) => {
     return group.map((c, idx) => {
-      const pos = getPos(idx, group.length, ringPct);
-      const delay = (idx * 0.3) % 4;
+      const pos = getFullscreenPosition(c, idx, group.length, ringPct);
       const initials = getContactInitials(c);
       return `
         <div 
           data-contact-id="${c.id}"
-          class="contact-orbit-avatar absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 hover:scale-130 transition-transform duration-300 animate-float"
-          style="left: ${pos.left}; top: ${pos.top}; animation-delay: ${delay}s;"
+          class="contact-orbit-avatar absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-20 hover:scale-130 transition-transform duration-200 touch-none select-none"
+          style="left: ${pos.left}; top: ${pos.top};"
           title="${escapeHtml(c.name)}"
         >
           <div class="w-11 h-11 rounded-full bg-slate-900 border-2 product-shadow flex items-center justify-center font-bold text-xs text-slate-100 overflow-hidden hover:ring-4 ring-indigo-500/50" style="border-color: ${TIER_CONFIG[c.tier]?.color || '#0066cc'}">

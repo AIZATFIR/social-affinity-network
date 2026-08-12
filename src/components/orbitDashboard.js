@@ -1,6 +1,9 @@
 import { TIER_CONFIG } from '../types.js';
 
-function getOrbitPosition(index, total, ringPercentage) {
+function getOrbitPosition(contact, index, total, ringPercentage) {
+  if (contact.leftPos && contact.topPos) {
+    return { left: contact.leftPos, top: contact.topPos };
+  }
   const angle = (index / Math.max(total, 1)) * 2 * Math.PI - Math.PI / 2;
   const radius = ringPercentage / 2;
   const left = 50 + radius * Math.cos(angle);
@@ -77,7 +80,7 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
 
       <!-- Concentric Orbit Ring Container (Stitch Canvas Style) -->
       <div class="relative py-4">
-        <div class="orbit-container w-full max-w-[360px] md:max-w-[440px] mx-auto flex items-center justify-center">
+        <div class="orbit-container w-full max-w-[360px] md:max-w-[440px] mx-auto flex items-center justify-center relative touch-none select-none">
           
           <!-- Ring 5: Acquaintances / Network (1500) -->
           <div class="ring w-full h-full bg-slate-500/10 dark:bg-blue-500/5"></div>
@@ -99,7 +102,7 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
             <span class="material-symbols-outlined text-2xl">account_circle</span>
           </div>
 
-          <!-- Floating Orbit Avatars -->
+          <!-- Floating Interactive Orbit Avatars -->
           ${renderOrbitAvatars(filtered, lovers, closeFriends, family, friends, acquaintances)}
 
         </div>
@@ -121,13 +124,13 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
 
         <div class="p-3.5 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-2 product-shadow">
           <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
-            <span class="material-symbols-outlined text-xs">hub</span> Growth Map
+            <span class="material-symbols-outlined text-xs">drag_pan</span> Interactive Diagram
           </p>
-          <div class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            Balanced Distribution
+          <div class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+            Drag & Drop Node
           </div>
           <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-            ${totalContacts > 0 ? `${totalContacts} kontak terdistribusi.` : 'Tambahkan kontak untuk memulai.'}
+            Geser node kontak bebas di orbit untuk ubah lingkaran.
           </p>
         </div>
       </div>
@@ -193,15 +196,15 @@ function renderOrbitAvatars(filteredContacts, lovers, closeFriends, family, frie
   const renderTierAvatars = (groupList, ringPercentage) => {
     return groupList.map((contact, idx) => {
       if (!filteredContacts.some(c => c.id === contact.id)) return '';
-      const pos = getOrbitPosition(idx, groupList.length, ringPercentage);
+      const pos = getOrbitPosition(contact, idx, groupList.length, ringPercentage);
       const delay = (idx * 0.4) % 3;
       const initials = getContactInitials(contact);
 
       return `
         <div 
           data-contact-id="${contact.id}"
-          class="contact-orbit-avatar absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 hover:scale-125 hover:z-30 transition-all duration-300 animate-float"
-          style="left: ${pos.left}; top: ${pos.top}; animation-delay: ${delay}s;"
+          class="contact-orbit-avatar absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-20 hover:scale-125 hover:z-30 transition-transform duration-200 touch-none select-none"
+          style="left: ${pos.left}; top: ${pos.top};"
           title="${escapeHtml(contact.name)} (${TIER_CONFIG[contact.tier]?.name || ''})"
         >
           <div class="relative group">

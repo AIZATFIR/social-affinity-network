@@ -211,8 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Contact Avatar Click (Opens Profile Drawer)
-    document.querySelectorAll('.contact-orbit-avatar, .contact-chip-item').forEach(elem => {
+    // Attach Orbit Node Drag-and-Drop Interaction
+    setupOrbitDragAndDrop();
+
+    // Non-orbit Contact Chips (in Circles view)
+    document.querySelectorAll('.contact-chip-item').forEach(elem => {
       elem.addEventListener('click', (e) => {
         const id = e.currentTarget.getAttribute('data-contact-id');
         if (id) {
@@ -517,6 +520,118 @@ document.addEventListener('DOMContentLoaded', () => {
           console.warn('Auth popup error:', err);
         }
       }
+    });
+  }
+
+  function setupOrbitDragAndDrop() {
+    let activeElem = null;
+    let activeId = null;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let startLeftPct = 50, startTopPct = 50;
+    let containerRect = null;
+
+    document.querySelectorAll('.contact-orbit-avatar').forEach(elem => {
+      const handlePointerDown = (e) => {
+        if (e.button && e.button !== 0) return;
+        
+        activeElem = elem;
+        activeId = elem.getAttribute('data-contact-id');
+        isDragging = false;
+
+        const container = elem.closest('.orbit-container');
+        if (!container) return;
+        containerRect = container.getBoundingClientRect();
+
+        startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+        startLeftPct = parseFloat(elem.style.left) || 50;
+        startTopPct = parseFloat(elem.style.top) || 50;
+
+        elem.style.transition = 'none';
+        elem.style.zIndex = '60';
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointercancel', handlePointerUp);
+      };
+
+      const handlePointerMove = (e) => {
+        if (!activeElem || activeElem !== elem) return;
+        const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : startX);
+        const currentY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : startY);
+
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        if (Math.hypot(dx, dy) > 4) {
+          isDragging = true;
+        }
+
+        if (isDragging && containerRect) {
+          const deltaLeftPct = (dx / containerRect.width) * 100;
+          const deltaTopPct = (dy / containerRect.height) * 100;
+
+          let newLeftPct = Math.max(4, Math.min(96, startLeftPct + deltaLeftPct));
+          let newTopPct = Math.max(4, Math.min(96, startTopPct + deltaTopPct));
+
+          elem.style.left = `${newLeftPct.toFixed(2)}%`;
+          elem.style.top = `${newTopPct.toFixed(2)}%`;
+        }
+      };
+
+      const handlePointerUp = async (e) => {
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener('pointercancel', handlePointerUp);
+
+        if (!activeElem || activeElem !== elem) return;
+
+        if (isDragging && containerRect) {
+          const finalLeftPct = parseFloat(elem.style.left) || 50;
+          const finalTopPct = parseFloat(elem.style.top) || 50;
+
+          const distFromCenterPct = Math.hypot(finalLeftPct - 50, finalTopPct - 50);
+
+          let newTier = 'acquaintances';
+          if (distFromCenterPct <= 12) {
+            newTier = 'lovers';
+          } else if (distFromCenterPct <= 22) {
+            newTier = 'close_friends';
+          } else if (distFromCenterPct <= 34) {
+            newTier = 'family';
+          } else if (distFromCenterPct <= 44) {
+            newTier = 'friends';
+          } else {
+            newTier = 'acquaintances';
+          }
+
+          const contacts = StorageManager.getContacts();
+          const contact = contacts.find(c => c.id === activeId);
+          if (contact) {
+            contact.leftPos = `${finalLeftPct.toFixed(2)}%`;
+            contact.topPos = `${finalTopPct.toFixed(2)}%`;
+            contact.tier = newTier;
+            contact.attitudeTasks = contact.attitudeTasks && contact.attitudeTasks.length > 0 ? contact.attitudeTasks : (TIER_CONFIG[newTier]?.defaultTasks || []);
+            await StorageManager.saveContact(contact, currentUser?.uid);
+            renderApp();
+          }
+        } else {
+          // Tap -> open profile drawer
+          const id = elem.getAttribute('data-contact-id');
+          if (id) {
+            selectedContactId = id;
+            renderApp();
+          }
+        }
+
+        activeElem = null;
+        activeId = null;
+        isDragging = false;
+      };
+
+      elem.addEventListener('pointerdown', handlePointerDown);
     });
   }
 

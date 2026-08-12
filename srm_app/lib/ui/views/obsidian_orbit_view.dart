@@ -38,27 +38,37 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
     final provider = context.watch<ContactProvider>();
     final contacts = provider.filteredContacts;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F7);
 
     const double canvasSize = 3600.0;
     const Offset centerOffset = Offset(canvasSize / 2, canvasSize / 2);
 
     return Container(
-      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F7),
+      width: double.infinity,
+      height: double.infinity,
+      color: bgColor,
       child: Stack(
         children: [
-          // Interactive Obsidian-Style Zoom & Pan Canvas
+          // Infinite Seamless Theme Background Fill (No Container Box Edges)
+          Positioned.fill(
+            child: Container(color: bgColor),
+          ),
+
+          // Interactive Obsidian-Style Zoom, Pan & Drag Canvas
           InteractiveViewer(
             transformationController: _transformationController,
             minScale: 0.1,
             maxScale: 3.5,
-            boundaryMargin: const EdgeInsets.all(2000),
+            boundaryMargin: const EdgeInsets.all(3000),
             clipBehavior: Clip.none,
-            child: SizedBox(
+            child: Container(
               width: canvasSize,
               height: canvasSize,
+              color: bgColor,
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  // CustomPainter for Concentric Rings & Grid Background
+                  // CustomPaint for Concentric Rings & Grid Background
                   CustomPaint(
                     size: const Size(canvasSize, canvasSize),
                     painter: OrbitPainter(isDark: isDark),
@@ -92,20 +102,21 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
                     ),
                   ),
 
-                  // Contact Orbit Nodes
+                  // Draggable Contact Orbit Nodes
                   ..._buildOrbitNodes(contacts, centerOffset),
                 ],
               ),
             ),
           ),
 
-          // Controls overlay: Reset Zoom & Legend
+          // Controls overlay: Reset Zoom Button
           Positioned(
             top: 16,
             right: 16,
             child: FloatingActionButton.small(
               onPressed: _resetZoom,
               backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
               child: const Icon(Icons.center_focus_strong, size: 20),
             ),
           ),
@@ -184,54 +195,22 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
         }
 
         nodes.add(
-          Positioned(
-            left: posX,
-            top: posY,
-            child: GestureDetector(
-              onTap: () => widget.onContactSelected(contact),
-              onPanUpdate: (details) {
-                context.read<ContactProvider>().updatePosition(
-                      contact.id,
-                      posX + details.delta.dx,
-                      posY + details.delta.dy,
-                    );
-              },
-              child: Tooltip(
-                message: '${contact.name} (${config.name})',
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF1E293B)
-                        : Colors.white,
-                    border: Border.all(color: config.color, width: 2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: config.color.withValues(alpha: 0.35),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      )
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: contact.avatarPath != null && File(contact.avatarPath!).existsSync()
-                        ? Image.file(File(contact.avatarPath!), fit: BoxFit.cover)
-                        : Center(
-                            child: Text(
-                              contact.initials,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: config.color,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
+          _DraggableContactNode(
+            key: ValueKey(contact.id),
+            contact: contact,
+            config: config,
+            initialX: posX,
+            initialY: posY,
+            centerOffset: centerOffset,
+            onTap: () => widget.onContactSelected(contact),
+            onDragEnd: (newX, newY, newTier) {
+              final updated = contact.copyWith(
+                dx: newX,
+                dy: newY,
+                tier: newTier,
+              );
+              context.read<ContactProvider>().updateContact(updated);
+            },
           ),
         );
       }
@@ -254,6 +233,138 @@ class _ObsidianOrbitViewState extends State<ObsidianOrbitView> {
           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+}
+
+class _DraggableContactNode extends StatefulWidget {
+  final Contact contact;
+  final DunbarTierConfig config;
+  final double initialX;
+  final double initialY;
+  final Offset centerOffset;
+  final VoidCallback onTap;
+  final Function(double newX, double newY, String newTier) onDragEnd;
+
+  const _DraggableContactNode({
+    super.key,
+    required this.contact,
+    required this.config,
+    required this.initialX,
+    required this.initialY,
+    required this.centerOffset,
+    required this.onTap,
+    required this.onDragEnd,
+  });
+
+  @override
+  State<_DraggableContactNode> createState() => _DraggableContactNodeState();
+}
+
+class _DraggableContactNodeState extends State<_DraggableContactNode> {
+  late double _currentX;
+  late double _currentY;
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentX = widget.initialX;
+    _currentY = widget.initialY;
+  }
+
+  @override
+  void didUpdateWidget(covariant _DraggableContactNode oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isDragging) {
+      _currentX = widget.initialX;
+      _currentY = widget.initialY;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Positioned(
+      left: _currentX,
+      top: _currentY,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onPanStart: (_) {
+          setState(() {
+            _isDragging = true;
+          });
+        },
+        onPanUpdate: (details) {
+          setState(() {
+            _currentX += details.delta.dx;
+            _currentY += details.delta.dy;
+          });
+        },
+        onPanEnd: (_) {
+          setState(() {
+            _isDragging = false;
+          });
+
+          // Calculate distance from center to auto-reassign Dunbar tier
+          final dxFromCenter = _currentX + 24 - widget.centerOffset.dx;
+          final dyFromCenter = _currentY + 24 - widget.centerOffset.dy;
+          final dist = math.sqrt(dxFromCenter * dxFromCenter + dyFromCenter * dyFromCenter);
+
+          String newTier = 'acquaintances';
+          if (dist <= 180) {
+            newTier = 'lovers';
+          } else if (dist <= 340) {
+            newTier = 'close_friends';
+          } else if (dist <= 520) {
+            newTier = 'family';
+          } else if (dist <= 780) {
+            newTier = 'friends';
+          } else {
+            newTier = 'acquaintances';
+          }
+
+          widget.onDragEnd(_currentX, _currentY, newTier);
+        },
+        child: Tooltip(
+          message: '${widget.contact.name} (${widget.config.name})',
+          child: AnimatedScale(
+            scale: _isDragging ? 1.25 : 1.0,
+            duration: const Duration(milliseconds: 150),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                border: Border.all(color: widget.config.color, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.config.color.withValues(alpha: _isDragging ? 0.6 : 0.35),
+                    blurRadius: _isDragging ? 20 : 12,
+                    spreadRadius: _isDragging ? 3 : 1,
+                  )
+                ],
+              ),
+              child: ClipOval(
+                child: widget.contact.avatarPath != null && File(widget.contact.avatarPath!).existsSync()
+                    ? Image.file(File(widget.contact.avatarPath!), fit: BoxFit.cover)
+                    : Center(
+                        child: Text(
+                          widget.contact.initials,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: widget.config.color,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
