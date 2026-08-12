@@ -302,18 +302,45 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Add Modal Controls
+    // Add/Edit Contact Modal Controls & Backdrop Listener
+    const closeModal = () => {
+      isModalOpen = false;
+      editingContact = null;
+      renderApp();
+    };
+
     const openAddModal = () => {
       editingContact = null;
       isModalOpen = true;
       renderApp();
     };
+
     document.getElementById('addContactBtn')?.addEventListener('click', openAddModal);
     document.getElementById('floatingAddBtn')?.addEventListener('click', openAddModal);
-    document.getElementById('btnCloseModal')?.addEventListener('click', () => {
-      isModalOpen = false;
-      editingContact = null;
-      renderApp();
+    document.getElementById('btnCloseModal')?.addEventListener('click', closeModal);
+    document.getElementById('btnCancelModal')?.addEventListener('click', closeModal);
+    
+    document.getElementById('contactModalBackdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'contactModalBackdrop') {
+        closeModal();
+      }
+    });
+
+    // Avatar Vector Preset Buttons inside Add Contact Modal
+    document.querySelectorAll('.avatar-preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const symbol = e.currentTarget.getAttribute('data-avatar');
+        const hiddenInput = document.getElementById('selectedAvatarInput');
+        if (hiddenInput && symbol) {
+          hiddenInput.value = symbol;
+          document.querySelectorAll('.avatar-preset-btn').forEach(b => {
+            b.classList.remove('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110', 'text-indigo-600', 'dark:text-indigo-400');
+            b.classList.add('border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+          });
+          e.currentTarget.classList.remove('border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+          e.currentTarget.classList.add('border-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-950', 'scale-110', 'text-indigo-600', 'dark:text-indigo-400');
+        }
+      });
     });
 
     // Batch Modal Controls
@@ -327,6 +354,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnCloseBatchModal')?.addEventListener('click', () => {
       isBatchModalOpen = false;
       renderApp();
+    });
+    document.getElementById('batchModalBackdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'batchModalBackdrop') {
+        isBatchModalOpen = false;
+        renderApp();
+      }
     });
 
     document.getElementById('batchTargetTierSelect')?.addEventListener('change', (e) => {
@@ -392,6 +425,12 @@ document.addEventListener('DOMContentLoaded', () => {
       isSocialModalOpen = false;
       renderApp();
     });
+    document.getElementById('socialModalBackdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'socialModalBackdrop') {
+        isSocialModalOpen = false;
+        renderApp();
+      }
+    });
 
     document.getElementById('btnSubmitSocialImport')?.addEventListener('click', async () => {
       const input = document.getElementById('socialImportInput');
@@ -415,7 +454,10 @@ document.addEventListener('DOMContentLoaded', () => {
             avatar: 'work',
             initials,
             tier,
+            phone: '',
             instagram,
+            whatsappNumber: '',
+            instagramHandle: instagram,
             notes: 'Diimpor dari LinkedIn / Social Followers',
             attitudeTasks: TIER_CONFIG[tier]?.defaultTasks || []
           }, currentUser?.uid);
@@ -430,13 +472,23 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const formData = new FormData(e.target);
       const tier = formData.get('tier');
+      const phoneVal = formData.get('phone') || formData.get('whatsappNumber') || '';
+      const igVal = formData.get('instagram') || formData.get('instagramHandle') || '';
+      const nameVal = formData.get('name') || '';
+
+      const parts = nameVal.trim().split(' ');
+      const initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : nameVal.substring(0, 2).toUpperCase();
+
       const contactData = {
         id: formData.get('id') || Date.now().toString(),
-        name: formData.get('name'),
+        name: nameVal,
         avatar: formData.get('avatar') || 'person',
+        initials,
         tier,
-        phone: formData.get('whatsappNumber') || formData.get('phone') || '',
-        instagram: formData.get('instagramHandle') || formData.get('instagram') || '',
+        phone: phoneVal,
+        whatsappNumber: phoneVal,
+        instagram: igVal,
+        instagramHandle: igVal,
         notes: formData.get('notes') || '',
         attitudeTasks: editingContact?.attitudeTasks || TIER_CONFIG[tier]?.defaultTasks || [],
         createdAt: editingContact?.createdAt || new Date().toISOString()
