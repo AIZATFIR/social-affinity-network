@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/contact.dart';
 import '../../models/dunbar_tier.dart';
@@ -17,6 +18,24 @@ class KinshipDrawer extends StatelessWidget {
     required this.contact,
     required this.onClose,
   });
+
+  Future<void> _launchWhatsApp(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanPhone.isEmpty) return;
+    final uri = Uri.parse('https://wa.me/$cleanPhone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _launchInstagram(String handle) async {
+    final cleanHandle = handle.replaceAll(RegExp(r'^@'), '').trim();
+    if (cleanHandle.isEmpty) return;
+    final uri = Uri.parse('https://instagram.com/$cleanHandle');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,17 +109,44 @@ class KinshipDrawer extends StatelessWidget {
                           contact.name,
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
+
+                        // Interactive Quick Tier Switcher Dropdown (Pindah Lingkaran di HP)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
                             color: config.color.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: config.color.withValues(alpha: 0.3)),
+                            border: Border.all(color: config.color.withValues(alpha: 0.4)),
                           ),
-                          child: Text(
-                            config.name,
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: config.color),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: contact.tier,
+                              isDense: true,
+                              icon: Icon(Icons.arrow_drop_down, color: config.color, size: 20),
+                              items: DunbarTierData.configs.entries.map((e) {
+                                return DropdownMenuItem<String>(
+                                  value: e.key,
+                                  child: Text(
+                                    e.value.name,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: e.value.color,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (newTier) {
+                                if (newTier != null && newTier != contact.tier) {
+                                  final updated = contact.copyWith(
+                                    tier: newTier,
+                                    attitudeTasks: List.from(DunbarTierData.configs[newTier]?.defaultTasks ?? []),
+                                  );
+                                  context.read<ContactProvider>().updateContact(updated);
+                                }
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -108,13 +154,13 @@ class KinshipDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // Quick Contact Actions
+                  // Quick Contact Actions (WhatsApp & Instagram)
                   Row(
                     children: [
                       if (contact.phone.isNotEmpty)
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () {},
+                            onPressed: () => _launchWhatsApp(contact.phone),
                             icon: const Icon(Icons.chat_bubble_outline, size: 16),
                             label: const Text('WhatsApp', style: TextStyle(fontSize: 12)),
                             style: ElevatedButton.styleFrom(
@@ -129,7 +175,7 @@ class KinshipDrawer extends StatelessWidget {
                       if (contact.instagram.isNotEmpty)
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () {},
+                            onPressed: () => _launchInstagram(contact.instagram),
                             icon: const Icon(Icons.camera_alt_outlined, size: 16),
                             label: const Text('Instagram', style: TextStyle(fontSize: 12)),
                             style: ElevatedButton.styleFrom(
