@@ -59,6 +59,64 @@ export class StorageManager {
     }
   }
 
+  static async resetNodePositions(userId = null) {
+    const contacts = this.getContacts().map(c => {
+      const { leftPos, topPos, dx, dy, ...rest } = c;
+      return rest;
+    });
+    this.saveAll(contacts);
+    if (userId) {
+      for (const c of contacts) {
+        await this.saveContact(c, userId);
+      }
+    }
+    return contacts;
+  }
+
+  static exportToJson() {
+    const contacts = this.getContacts();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(contacts, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `srm_contacts_backup_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  static exportToCsv() {
+    const contacts = this.getContacts();
+    if (contacts.length === 0) return;
+
+    const headers = ["Name", "Tier", "Phone", "Instagram", "Notes"];
+    const rows = contacts.map(c => [
+      `"${(c.name || '').replace(/"/g, '""')}"`,
+      `"${(c.tier || '').replace(/"/g, '""')}"`,
+      `"${(c.phone || '').replace(/"/g, '""')}"`,
+      `"${(c.instagram || '').replace(/"/g, '""')}"`,
+      `"${(c.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", encodedUri);
+    downloadAnchor.setAttribute("download", `srm_contacts_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  static async importFromJson(jsonData, userId = null) {
+    if (!Array.isArray(jsonData)) return false;
+    for (const c of jsonData) {
+      if (c && c.name && c.tier) {
+        await this.saveContact(c, userId);
+      }
+    }
+    return true;
+  }
+
   static subscribeCloudSync(userId, onUpdate) {
     if (!userId) return null;
     const contactsRef = collection(db, 'users', userId, 'contacts');

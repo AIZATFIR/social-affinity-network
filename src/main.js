@@ -31,6 +31,26 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
   let cloudUnsubscribe = null;
 
+  // Floating Toast Notification System
+  function showToast(message, type = 'info') {
+    const existing = document.getElementById('toastContainer');
+    if (existing) existing.remove();
+
+    const toastContainer = document.createElement('div');
+    toastContainer.id = 'toastContainer';
+    toastContainer.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 animate-bounce-short pointer-events-none';
+    toastContainer.innerHTML = `
+      <div class="px-4 py-2 bg-slate-900/90 dark:bg-white/90 text-white dark:text-slate-900 text-xs font-bold rounded-2xl shadow-xl backdrop-blur-md border border-slate-700/50 flex items-center gap-2">
+        <span class="material-symbols-outlined text-base ${type === 'success' ? 'text-emerald-400 dark:text-emerald-600' : 'text-indigo-400 dark:text-indigo-600'}">info</span>
+        <span>${escapeHtml(message)}</span>
+      </div>
+    `;
+    document.body.appendChild(toastContainer);
+    setTimeout(() => {
+      toastContainer.remove();
+    }, 2500);
+  }
+
   // Initialize Auth Listener
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
@@ -69,13 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <!-- Top Actions -->
             <div class="flex items-center gap-2">
-              ${'contacts' in navigator && 'Select' in window.ContactsManager ? `
-                <button id="importContactsBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-semibold rounded-full transition-all flex items-center gap-1 border border-indigo-200 dark:border-indigo-800">
-                  <span class="material-symbols-outlined text-sm">contacts</span>
-                  <span class="hidden sm:inline">Import HP</span>
-                </button>
-              ` : ''}
-
               <button id="addContactBtn" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-full transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1 product-shadow">
                 <span class="material-symbols-outlined text-sm">add</span>
                 <span class="hidden sm:inline">Tambah Kontak</span>
@@ -195,6 +208,30 @@ document.addEventListener('DOMContentLoaded', () => {
       renderApp();
     });
 
+    // Reset Orbit Node Positions
+    document.getElementById('btnResetOrbit')?.addEventListener('click', async () => {
+      await StorageManager.resetNodePositions(currentUser?.uid);
+      showToast('Posisi orbit berhasil disetel ulang!', 'success');
+      renderApp();
+    });
+
+    // Backup JSON Export
+    document.getElementById('btnExportJsonTop')?.addEventListener('click', () => {
+      StorageManager.exportToJson();
+      showToast('Backup data berhasil di-download!');
+    });
+
+    // Copy Contact Details Button in Drawer
+    document.getElementById('btnCopyContact')?.addEventListener('click', () => {
+      const contacts = StorageManager.getContacts();
+      const c = contacts.find(item => item.id === selectedContactId);
+      if (c) {
+        const infoStr = `Nama: ${c.name}\nCircle: ${TIER_CONFIG[c.tier]?.name || c.tier}\nWhatsApp: ${c.phone || '-'}\nInstagram: ${c.instagram || '-'}\nNotes: ${c.notes || '-'}`;
+        navigator.clipboard.writeText(infoStr);
+        showToast('Info kontak berhasil disalin ke clipboard!', 'success');
+      }
+    });
+
     // Filter Chips
     document.querySelectorAll('[data-filter]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -282,6 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isDone: false
           });
           await StorageManager.saveContact(contact, currentUser?.uid);
+          showToast('Poin tindakan baru berhasil ditambahkan!', 'success');
           renderApp();
         }
       }
@@ -301,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedContactId && confirm('Apakah Anda yakin ingin menghapus kontak ini?')) {
         await StorageManager.deleteContact(selectedContactId, currentUser?.uid);
         selectedContactId = null;
+        showToast('Kontak telah dihapus dari orbit', 'info');
         renderApp();
       }
     });
@@ -411,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await StorageManager.saveContact(contact, currentUser?.uid);
           }
         }
+        showToast(`${batchSelectedIds.size} kontak berhasil dipindahkan ke ${TIER_CONFIG[batchTargetTier]?.name || batchTargetTier}!`, 'success');
         isBatchModalOpen = false;
         batchSelectedIds.clear();
         renderApp();
@@ -443,6 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (raw) {
         const lines = raw.split('\n');
+        let count = 0;
         for (const line of lines) {
           const text = line.trim();
           if (!text) continue;
@@ -464,7 +505,9 @@ document.addEventListener('DOMContentLoaded', () => {
             notes: 'Diimpor dari LinkedIn / Social Followers',
             attitudeTasks: TIER_CONFIG[tier]?.defaultTasks || []
           }, currentUser?.uid);
+          count++;
         }
+        showToast(`Berhasil mengimpor ${count} kontak ke ${TIER_CONFIG[tier]?.name || tier}!`, 'success');
         isSocialModalOpen = false;
         renderApp();
       }
@@ -498,6 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       await StorageManager.saveContact(contactData, currentUser?.uid);
+      showToast(editingContact ? 'Perubahan kontak berhasil disimpan!' : 'Kontak baru berhasil ditambahkan ke orbit!', 'success');
       isModalOpen = false;
       editingContact = null;
       renderApp();
@@ -513,9 +557,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authBtn')?.addEventListener('click', async () => {
       if (currentUser) {
         await signOut(auth);
+        showToast('Berhasil logout', 'info');
       } else {
         try {
           await signInWithPopup(auth, googleProvider);
+          showToast('Berhasil login dengan Google!', 'success');
         } catch (err) {
           console.warn('Auth popup error:', err);
         }
@@ -615,6 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
             contact.tier = newTier;
             contact.attitudeTasks = contact.attitudeTasks && contact.attitudeTasks.length > 0 ? contact.attitudeTasks : (TIER_CONFIG[newTier]?.defaultTasks || []);
             await StorageManager.saveContact(contact, currentUser?.uid);
+            showToast(`Kontak dipindahkan ke ${TIER_CONFIG[newTier]?.name || newTier}`, 'success');
             renderApp();
           }
         } else {
@@ -633,6 +680,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       elem.addEventListener('pointerdown', handlePointerDown);
     });
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
   // Initial Render

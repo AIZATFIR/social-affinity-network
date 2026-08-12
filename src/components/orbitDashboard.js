@@ -32,7 +32,7 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
   const acquaintances = contacts.filter(c => c.tier === 'acquaintances');
 
   const totalContacts = contacts.length;
-  const maxCapacity = 1666; // Dunbar total limit sum (1+5+10+150+1500)
+  const maxCapacity = 1666;
 
   return `
     <div class="max-w-md md:max-w-2xl mx-auto space-y-6 animate-fade-in">
@@ -51,6 +51,12 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
             />
           </div>
 
+          <button id="btnResetOrbit" class="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center" title="Reset Posisi Orbit">
+            <span class="material-symbols-outlined text-lg">center_focus_strong</span>
+          </button>
+          <button id="btnExportJsonTop" class="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl transition-all border border-slate-200 dark:border-slate-700 flex items-center justify-center" title="Export Backup JSON">
+            <span class="material-symbols-outlined text-lg">download</span>
+          </button>
           <button id="btnOpenBatchModalTop" class="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl transition-all border border-indigo-200 dark:border-indigo-800 flex items-center justify-center" title="Pindah Batch">
             <span class="material-symbols-outlined text-lg">swap_horiz</span>
           </button>
@@ -83,22 +89,32 @@ export function renderOrbitDashboard(contacts, selectedTierFilter, searchQuery) 
         <div class="orbit-container w-full max-w-[360px] md:max-w-[440px] mx-auto flex items-center justify-center relative touch-none select-none">
           
           <!-- Ring 5: Acquaintances / Network (1500) -->
-          <div class="ring w-full h-full bg-slate-500/10 dark:bg-blue-500/5"></div>
+          <div class="ring w-full h-full bg-slate-500/10 dark:bg-blue-500/5">
+            <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pointer-events-none">Kenalan 1500</span>
+          </div>
           
           <!-- Ring 4: Friends (150) -->
-          <div class="ring w-[78%] h-[78%] bg-indigo-500/15 dark:bg-indigo-500/10"></div>
+          <div class="ring w-[78%] h-[78%] bg-indigo-500/15 dark:bg-indigo-500/10">
+            <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-indigo-500/70 dark:text-indigo-400/70 uppercase tracking-wider pointer-events-none">Teman 150</span>
+          </div>
           
           <!-- Ring 3: Family (10) -->
-          <div class="ring w-[56%] h-[56%] bg-emerald-500/15 dark:bg-emerald-500/10"></div>
+          <div class="ring w-[56%] h-[56%] bg-emerald-500/15 dark:bg-emerald-500/10">
+            <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-emerald-500/70 dark:text-emerald-400/70 uppercase tracking-wider pointer-events-none">Keluarga 10</span>
+          </div>
           
           <!-- Ring 2: Close Friends (5) -->
-          <div class="ring w-[36%] h-[36%] bg-amber-500/20 dark:bg-amber-500/15"></div>
+          <div class="ring w-[36%] h-[36%] bg-amber-500/20 dark:bg-amber-500/15">
+            <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-amber-500/80 dark:text-amber-400/80 uppercase tracking-wider pointer-events-none">Close 5</span>
+          </div>
 
           <!-- Ring 1: Intimate / Lovers (1) -->
-          <div class="ring w-[20%] h-[20%] bg-rose-500/25 dark:bg-rose-500/20"></div>
+          <div class="ring w-[20%] h-[20%] bg-rose-500/25 dark:bg-rose-500/20">
+            <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-rose-500/80 dark:text-rose-400/80 uppercase tracking-wider pointer-events-none">Lovers 1</span>
+          </div>
 
           <!-- Center Node: YOU -->
-          <div class="relative z-10 w-14 h-14 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-xl flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-105 transition-transform" style="box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);" title="Pusat Energi Sosialisasi (YOU)">
+          <div class="relative z-10 w-14 h-14 rounded-full border-2 border-amber-400 bg-gradient-to-tr from-slate-900 to-slate-800 text-amber-400 shadow-xl flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-105 transition-transform pointer-events-none" style="box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);" title="Pusat Energi Sosialisasi (YOU)">
             <span class="material-symbols-outlined text-2xl">account_circle</span>
           </div>
 
@@ -197,7 +213,6 @@ function renderOrbitAvatars(filteredContacts, lovers, closeFriends, family, frie
     return groupList.map((contact, idx) => {
       if (!filteredContacts.some(c => c.id === contact.id)) return '';
       const pos = getOrbitPosition(contact, idx, groupList.length, ringPercentage);
-      const delay = (idx * 0.4) % 3;
       const initials = getContactInitials(contact);
 
       return `

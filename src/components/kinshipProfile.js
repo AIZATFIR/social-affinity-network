@@ -12,6 +12,7 @@ export function renderKinshipProfileDrawer(contact) {
 
   const attitudeTasks = contact.attitudeTasks || tier.defaultTasks || [];
   const completedCount = attitudeTasks.filter(t => t.isDone).length;
+  const taskProgressPct = attitudeTasks.length > 0 ? Math.round((completedCount / attitudeTasks.length) * 100) : 0;
 
   return `
     <div id="profileDrawerBackdrop" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end animate-fade-in">
@@ -48,19 +49,22 @@ export function renderKinshipProfileDrawer(contact) {
             </div>
 
             <!-- Quick Action Buttons -->
-            <div class="flex gap-3 mt-2 w-full">
+            <div class="flex gap-2 mt-2 w-full flex-wrap">
               ${waUrl ? `
-                <a href="${waUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                <a href="${waUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-1.5 transition-all product-shadow">
                   <span class="material-symbols-outlined text-sm">chat_bubble</span>
                   <span>WhatsApp</span>
                 </a>
               ` : ''}
               ${igUrl ? `
-                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-4 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-2 transition-all product-shadow">
+                <a href="${igUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 px-3 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold rounded-full text-xs flex items-center justify-center gap-1.5 transition-all product-shadow">
                   <span class="material-symbols-outlined text-sm">photo_camera</span>
                   <span>Instagram</span>
                 </a>
               ` : ''}
+              <button id="btnCopyContact" class="py-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-semibold rounded-full text-xs flex items-center justify-center gap-1 transition-all border border-slate-200 dark:border-slate-700" title="Salin Info Kontak">
+                <span class="material-symbols-outlined text-sm">content_copy</span>
+              </button>
             </div>
           </section>
 
@@ -71,7 +75,12 @@ export function renderKinshipProfileDrawer(contact) {
                 <span class="material-symbols-outlined text-lg">check_circle</span>
                 <h2>How to Treat Them (Tasks)</h2>
               </div>
-              <span class="text-xs font-bold text-slate-400">${completedCount} / ${attitudeTasks.length} Done</span>
+              <span class="text-xs font-bold text-slate-400">${completedCount} / ${attitudeTasks.length} (${taskProgressPct}%)</span>
+            </div>
+
+            <!-- Task Progress Bar -->
+            <div class="h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: ${taskProgressPct}%"></div>
             </div>
 
             <!-- Task Items Checklist -->
@@ -94,7 +103,7 @@ export function renderKinshipProfileDrawer(contact) {
                   </button>
                 </div>
               `).join('') : `
-                <div class="text-xs text-slate-400 italic">Belum ada poin instruksi. Klik "+ Tambah Poin" di bawah.</div>
+                <div class="text-xs text-slate-400 italic">Belum ada poin instruksi. Klik "+ Tambah" di bawah.</div>
               `}
             </div>
 

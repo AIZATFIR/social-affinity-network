@@ -7,7 +7,7 @@ export function renderNetworkInsights(contacts) {
 
   // Calculate Health Index (0-100%) based on Dunbar balance
   let healthScore = 95;
-  if (loversCount > 1) healthScore -= 20;
+  if (loversCount > 1) healthScore -= 25;
   if (closeCount > 5) healthScore -= 15;
   if (totalCount === 0) healthScore = 100;
   healthScore = Math.max(0, Math.min(100, healthScore));
@@ -34,7 +34,7 @@ export function renderNetworkInsights(contacts) {
           <span>Alokasi Energi & Health Score</span>
         </h1>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Menjaga batasan energi sosial agar tidak burnout emosional.
+          Evaluasi batas energi emosional & keseimbangan lingkaran Dunbar sosial Anda.
         </p>
       </div>
 
@@ -75,30 +75,19 @@ export function renderNetworkInsights(contacts) {
         <p class="text-xs ${isBurnoutRisk ? 'text-rose-500 font-semibold' : 'text-slate-500 dark:text-slate-400'}">
           ${isBurnoutRisk ? '⚠️ Peringatan Overload: Anda menginvestasikan energi melebihi batas 100%. Pindahkan beberapa kontak ke Kenalan (1500 limit).' : '💡 Investasi energi Anda sehat. Ingat, kenalan 1500 tidak sedalam Teman Dekat (5) & Teman (150).'}
         </p>
-      </div>
 
-      <!-- Circle Distribution Graph Card -->
-      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 product-shadow space-y-4">
-        <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-          <span class="material-symbols-outlined text-indigo-500 text-base">pie_chart</span>
-          <span>Distribusi Lingkaran Hubungan</span>
-        </h3>
-
-        <div class="space-y-3.5">
+        <!-- Energy Weight Breakdown -->
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 gap-2">
           ${Object.entries(TIER_CONFIG).map(([key, config]) => {
             const count = contacts.filter(c => c.tier === key).length;
-            const percent = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+            const spent = (count * config.energyWeight).toFixed(1);
             return `
-              <div class="space-y-1">
-                <div class="flex justify-between text-xs font-semibold">
-                  <span class="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-sm">${config.icon}</span> ${config.name}
-                  </span>
-                  <span class="text-slate-500 dark:text-slate-400">${count} Kontak (${percent}%)</span>
+              <div class="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                <div class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${config.color}"></span>
+                  <span>${config.name.split('/')[0].trim()}</span>
                 </div>
-                <div class="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div class="h-full rounded-full transition-all duration-500" style="width: ${percent}%; background-color: ${config.color}"></div>
-                </div>
+                <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">${spent}% (${count} orang)</div>
               </div>
             `;
           }).join('')}
